@@ -7,10 +7,11 @@ use App\Models\Category;
 use App\Models\FoodItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Table;
 
 class POSController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $categories = Category::where('is_active', true)
             ->orderBy('sort_order')
@@ -27,7 +28,13 @@ class POSController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        return view('pos.index', compact('categories', 'foodItems', 'featuredItems'));
+        // Get selected table if table_id is provided
+        $selectedTable = null;
+        if ($request->has('table_id')) {
+            $selectedTable = Table::find($request->table_id);
+        }
+
+        return view('pos.index', compact('categories', 'foodItems', 'featuredItems', 'selectedTable'));
     }
 
     public function getFoodItemsByCategory($categoryId)
@@ -49,10 +56,12 @@ class POSController extends Controller
             'items.*.food_item_id' => 'required|exists:food_items,id',
             'items.*.quantity' => 'required|integer|min:1',
             'payment_method' => 'required|in:cash,card,gift,other',
+            'table_id' => 'nullable|exists:tables,id',
         ]);
 
         $order = new Order();
         $order->order_type = $request->order_type;
+        $order->table_id = $request->table_id;
         $order->payment_method = $request->payment_method;
         $order->subtotal = 0;
         $order->tax_amount = 0;
@@ -60,6 +69,14 @@ class POSController extends Controller
         $order->total_amount = 0;
         $order->status = 'pending';
         $order->save();
+
+        // Update table status to occupied if it's a dine-in order with table
+        if ($request->order_type === 'dine_in' && $request->table_id) {
+            $table = Table::find($request->table_id);
+            if ($table && $table->isAvailable()) {
+                $table->update(['status' => 'occupied']);
+            }
+        }
 
         $subtotal = 0;
         foreach ($request->items as $item) {

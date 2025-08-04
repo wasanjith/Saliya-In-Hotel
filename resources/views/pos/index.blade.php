@@ -66,7 +66,7 @@
                         <i class="fas fa-users mr-3"></i>
                         <span>Customers</span>
                     </a>
-                    <a href="#" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                    <a href="{{ route('tables.index') }}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
                         <i class="fas fa-table mr-3"></i>
                         <span>Tables</span>
                     </a>
@@ -207,7 +207,7 @@
                                     class="flex-1 py-2 px-3 rounded-lg text-sm font-medium">
                                 Delivery
                             </button>
-                            <button @click="orderType = 'dine_in'" 
+                            <button @click="handleDineInClick()" 
                                     :class="orderType === 'dine_in' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
                                     class="flex-1 py-2 px-3 rounded-lg text-sm font-medium">
                                 Dine In
@@ -218,6 +218,28 @@
                                 Takeaway
                             </button>
                         </div>
+                        
+                        <!-- Selected Table Display -->
+                        <template x-if="selectedTable">
+                            <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-table text-green-600 mr-2"></i>
+                                        <span class="text-sm font-medium text-green-800">
+                                            Selected: <span x-text="selectedTable.name"></span>
+                                        </span>
+                                    </div>
+                                    <button @click="selectedTable = null" 
+                                            class="text-green-600 hover:text-green-800">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="text-xs text-green-600 mt-1">
+                                    <span x-text="selectedTable.capacity + ' seats'"></span> • 
+                                    <span x-text="selectedTable.location"></span>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                     
                     <!-- Order Items -->
@@ -331,6 +353,7 @@
                 favoriteItems: [],
                 showFavorites: false,
                 orderNumber: Math.floor(Math.random() * 900000) + 100000,
+                selectedTable: @json($selectedTable),
                 
                 // Food items data from backend
                 allItems: @json($foodItems),
@@ -419,12 +442,23 @@
                     alert('Discount feature coming soon!');
                 },
                 
+                handleDineInClick() {
+                    if (this.selectedTable) {
+                        // If table is already selected, just set order type to dine_in
+                        this.orderType = 'dine_in';
+                    } else {
+                        // Redirect to tables page for dine-in orders
+                        window.location.href = '{{ route("tables.index") }}';
+                    }
+                },
+                
                 async processOrder() {
                     if (this.orderItems.length === 0) return;
                     
                     const orderData = {
                         order_type: this.orderType,
                         payment_method: this.paymentMethod,
+                        table_id: this.selectedTable ? this.selectedTable.id : null,
                         items: this.orderItems.map(item => ({
                             food_item_id: item.id,
                             quantity: item.quantity
