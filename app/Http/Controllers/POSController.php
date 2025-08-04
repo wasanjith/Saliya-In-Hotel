@@ -81,8 +81,9 @@ class POSController extends Controller
 
         // Calculate tax and total (you can adjust tax rate as needed)
         $taxRate = 0.14; // 14% tax
-        $taxAmount = $subtotal * $taxRate;
-        $discountAmount = 0; // You can add discount logic here
+        $taxAmount = round($subtotal * $taxRate);
+        $discountRate = 0.12; // 12% discount
+        $discountAmount = round($subtotal * $discountRate);
         $totalAmount = $subtotal + $taxAmount - $discountAmount;
 
         $order->update([

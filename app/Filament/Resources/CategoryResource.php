@@ -45,8 +45,15 @@ class CategoryResource extends Resource
                         
                         Forms\Components\FileUpload::make('image')
                             ->image()
+                            ->imageEditor()
+                            ->imageCropAspectRatio('1:1')
+                            ->imageResizeTargetWidth('200')
+                            ->imageResizeTargetHeight('200')
                             ->directory('categories')
+                            ->disk('public')
                             ->visibility('public')
+                            ->maxSize(2048)
+                            ->helperText('Upload a square image (200x200px recommended)')
                             ->columnSpanFull(),
                         
                         Forms\Components\Toggle::make('is_active')
@@ -65,9 +72,15 @@ class CategoryResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('image')
-                    ->circular()
-                    ->size(50),
+                Tables\Columns\TextColumn::make('image')
+                    ->label('Image')
+                    ->html()
+                    ->formatStateUsing(function ($state) {
+                        if ($state) {
+                            return '<img src="' . asset('storage/' . $state) . '" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">';
+                        }
+                        return '<img src="' . asset('images/placeholder-category.svg') . '" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">';
+                    }),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),

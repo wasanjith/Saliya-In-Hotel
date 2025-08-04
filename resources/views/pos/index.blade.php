@@ -128,9 +128,9 @@
                                     :class="selectedCategory === {{ $category->id }} ? 'bg-blue-500 text-white' : 'bg-white text-gray-700'"
                                     class="category-item flex flex-col items-center p-4 rounded-lg shadow-sm hover:shadow-md transition-all min-w-[100px]">
                                 @if($category->image)
-                                    <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}" class="w-8 h-8 mb-2 rounded">
+                                    <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}" class="w-8 h-8 mb-2 rounded object-cover">
                                 @else
-                                    <i class="fas fa-utensils text-2xl mb-2"></i>
+                                    <img src="{{ asset('images/placeholder-category.svg') }}" alt="{{ $category->name }}" class="w-8 h-8 mb-2 rounded object-cover">
                                 @endif
                                 <span class="text-sm font-medium">{{ $category->name }}</span>
                             </button>
@@ -160,19 +160,19 @@
                             <template x-for="item in filteredItems" :key="item.id">
                                 <div class="food-item-card bg-white rounded-lg shadow-sm hover:shadow-md overflow-hidden cursor-pointer"
                                      @click="addToOrder(item)">
-                                    <div class="h-32 bg-gray-200 flex items-center justify-center">
+                                    <div class="h-32 bg-gray-200 flex items-center justify-center overflow-hidden">
                                         <template x-if="item.image">
-                                            <img :src="'/storage/' + item.image" :alt="item.name" class="w-full h-full object-cover">
+                                            <img :src="'/storage/' + item.image" :alt="item.name" class="w-full h-full object-cover hover:scale-110 transition-transform duration-300">
                                         </template>
                                         <template x-if="!item.image">
-                                            <i class="fas fa-utensils text-3xl text-gray-400"></i>
+                                            <img src="/images/placeholder-food.svg" :alt="item.name" class="w-full h-full object-cover">
                                         </template>
                                     </div>
                                     <div class="p-3">
                                         <h4 class="font-medium text-gray-800 mb-1" x-text="item.name"></h4>
                                         <p class="text-sm text-gray-600 mb-2" x-text="item.description"></p>
                                         <div class="flex justify-between items-center">
-                                            <span class="text-lg font-bold text-blue-600" x-text="'$' + (orderType === 'takeaway' ? item.takeaway_price : item.dine_in_price)"></span>
+                                                                                         <span class="text-lg font-bold text-blue-600" x-text="'Rs. ' + Math.round(orderType === 'takeaway' ? item.takeaway_price : item.dine_in_price)"></span>
                                             <button @click.stop="toggleFavorite(item)" 
                                                     :class="isFavorite(item.id) ? 'text-yellow-500' : 'text-gray-400'"
                                                     class="hover:text-yellow-500">
@@ -237,7 +237,7 @@
                                     </div>
                                     <div class="flex-1">
                                         <h4 class="font-medium" x-text="item.name"></h4>
-                                        <p class="text-sm text-gray-600" x-text="'$' + item.price"></p>
+                                                                                 <p class="text-sm text-gray-600" x-text="'Rs. ' + Math.round(item.price)"></p>
                                     </div>
                                     <div class="flex items-center space-x-2">
                                         <button @click="decreaseQuantity(index)" 
@@ -256,7 +256,7 @@
                                         <button @click="applyDiscount(index)" class="text-xs text-blue-600 hover:underline">Discount</button>
                                         <button @click="removeItem(index)" class="text-xs text-red-600 hover:underline">Remove</button>
                                     </div>
-                                    <span class="font-medium" x-text="'$' + (item.price * item.quantity).toFixed(2)"></span>
+                                                                         <span class="font-medium" x-text="'Rs. ' + Math.round(item.price * item.quantity)"></span>
                                 </div>
                             </div>
                         </template>
@@ -267,7 +267,7 @@
                         <div class="space-y-2 mb-4">
                             <div class="flex justify-between">
                                 <span>Sub total:</span>
-                                <span x-text="'$' + subtotal.toFixed(2)"></span>
+                                                                 <span x-text="'Rs. ' + Math.round(subtotal)"></span>
                             </div>
                             <div class="flex justify-between">
                                 <span>Tax:</span>
@@ -279,7 +279,7 @@
                             </div>
                             <div class="flex justify-between text-lg font-bold text-blue-600">
                                 <span>Total:</span>
-                                <span x-text="'$' + total.toFixed(2)"></span>
+                                                                 <span x-text="'Rs. ' + Math.round(total)"></span>
                             </div>
                         </div>
                         
@@ -313,7 +313,7 @@
                         <button @click="processOrder()" 
                                 :disabled="orderItems.length === 0"
                                 class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                            Pay $<span x-text="total.toFixed(2)"></span>
+                                                         Pay Rs. <span x-text="Math.round(total)"></span>
                         </button>
                     </div>
                 </div>
@@ -352,11 +352,11 @@
                     return this.orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                 },
                 
-                get total() {
-                    const tax = this.subtotal * 0.14;
-                    const discount = this.subtotal * 0.12;
-                    return this.subtotal + tax - discount;
-                },
+                                 get total() {
+                     const tax = Math.round(this.subtotal * 0.14);
+                     const discount = Math.round(this.subtotal * 0.12);
+                     return this.subtotal + tax - discount;
+                 },
                 
                 selectCategory(categoryId) {
                     this.selectedCategory = categoryId;
@@ -375,13 +375,13 @@
                     if (existingItem) {
                         existingItem.quantity++;
                     } else {
-                        const price = this.orderType === 'takeaway' ? item.takeaway_price : item.dine_in_price;
-                        this.orderItems.push({
-                            id: item.id,
-                            name: item.name,
-                            price: parseFloat(price),
-                            quantity: 1
-                        });
+                                                 const price = this.orderType === 'takeaway' ? item.takeaway_price : item.dine_in_price;
+                         this.orderItems.push({
+                             id: item.id,
+                             name: item.name,
+                             price: Math.round(parseFloat(price)),
+                             quantity: 1
+                         });
                     }
                 },
                 

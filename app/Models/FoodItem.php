@@ -28,6 +28,18 @@ class FoodItem extends Model
         'is_featured' => 'boolean',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::saving(function ($foodItem) {
+            // Auto-generate slug if not provided
+            if (empty($foodItem->slug)) {
+                $foodItem->slug = \Str::slug($foodItem->name);
+            }
+        });
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -36,5 +48,16 @@ class FoodItem extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Get the image URL attribute
+     */
+    public function getImageUrlAttribute()
+    {
+        if ($this->image) {
+            return asset('storage/' . $this->image);
+        }
+        return asset('images/placeholder-food.svg');
     }
 }

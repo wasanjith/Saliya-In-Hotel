@@ -68,26 +68,26 @@ class OrderResource extends Resource
                         Forms\Components\TextInput::make('subtotal')
                             ->required()
                             ->numeric()
-                            ->prefix('$')
-                            ->step(0.01),
+                            ->prefix('Rs.')
+                            ->step(1),
                         
                         Forms\Components\TextInput::make('tax_amount')
                             ->numeric()
-                            ->prefix('$')
-                            ->step(0.01)
+                            ->prefix('Rs.')
+                            ->step(1)
                             ->default(0),
                         
                         Forms\Components\TextInput::make('discount_amount')
                             ->numeric()
-                            ->prefix('$')
-                            ->step(0.01)
+                            ->prefix('Rs.')
+                            ->step(1)
                             ->default(0),
                         
                         Forms\Components\TextInput::make('total_amount')
                             ->required()
                             ->numeric()
-                            ->prefix('$')
-                            ->step(0.01),
+                            ->prefix('Rs.')
+                            ->step(1),
                     ])
                     ->columns(2),
                 
@@ -123,7 +123,7 @@ class OrderResource extends Resource
                         'danger' => 'cancelled',
                     ]),
                 Tables\Columns\TextColumn::make('total_amount')
-                    ->money('USD')
+                    ->formatStateUsing(fn ($state) => 'Rs. ' . number_format($state, 0))
                     ->sortable(),
                 Tables\Columns\BadgeColumn::make('payment_method')
                     ->colors([

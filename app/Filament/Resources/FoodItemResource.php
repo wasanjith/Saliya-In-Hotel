@@ -51,8 +51,15 @@ class FoodItemResource extends Resource
                         
                         Forms\Components\FileUpload::make('image')
                             ->image()
+                            ->imageEditor()
+                            ->imageCropAspectRatio('4:3')
+                            ->imageResizeTargetWidth('400')
+                            ->imageResizeTargetHeight('300')
                             ->directory('food-items')
+                            ->disk('public')
                             ->visibility('public')
+                            ->maxSize(2048)
+                            ->helperText('Upload a landscape image (400x300px recommended)')
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
@@ -62,14 +69,14 @@ class FoodItemResource extends Resource
                         Forms\Components\TextInput::make('dine_in_price')
                             ->required()
                             ->numeric()
-                            ->prefix('$')
-                            ->step(0.01),
+                            ->prefix('Rs.')
+                            ->step(1),
                         
                         Forms\Components\TextInput::make('takeaway_price')
                             ->required()
                             ->numeric()
-                            ->prefix('$')
-                            ->step(0.01),
+                            ->prefix('Rs.')
+                            ->step(1),
                     ])
                     ->columns(2),
                 
@@ -95,9 +102,15 @@ class FoodItemResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('image')
-                    ->circular()
-                    ->size(50),
+                Tables\Columns\TextColumn::make('image')
+                    ->label('Image')
+                    ->html()
+                    ->formatStateUsing(function ($state) {
+                        if ($state) {
+                            return '<img src="' . asset('storage/' . $state) . '" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">';
+                        }
+                        return '<img src="' . asset('images/placeholder-food.svg') . '" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">';
+                    }),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
@@ -105,10 +118,10 @@ class FoodItemResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('dine_in_price')
-                    ->money('USD')
+                    ->formatStateUsing(fn ($state) => 'Rs. ' . number_format($state, 0))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('takeaway_price')
-                    ->money('USD')
+                    ->formatStateUsing(fn ($state) => 'Rs. ' . number_format($state, 0))
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_available')
                     ->boolean()

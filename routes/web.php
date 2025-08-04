@@ -11,3 +11,5 @@ Route::get('/', function () {
 Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
 Route::get('/pos/category/{categoryId}/items', [POSController::class, 'getFoodItemsByCategory'])->name('pos.category.items');
 Route::post('/pos/order', [POSController::class, 'storeOrder'])->name('pos.order.store');
+
+
