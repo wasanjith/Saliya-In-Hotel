@@ -49,9 +49,9 @@
       </style>
 </head>
 <body class="bg-gray-100" x-data="tablesSystem()">
-    <div class="flex h-screen">
+    <div class="flex">
         <!-- Left Sidebar -->
-        <div class="w-64 bg-gray-800 text-white">
+        <div class="w-64 bg-gray-800 text-white flex flex-col fixed top-0 left-0 h-screen z-50">
             <!-- Logo -->
             <div class="p-4 border-b border-gray-700">
                 <div class="flex items-center space-x-2">
@@ -87,7 +87,7 @@
             </nav>
             
             <!-- Logout -->
-            <div class="absolute bottom-4 left-4 right-4">
+            <div class="mt-auto p-4">
                 <a href="#" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg transition-colors duration-200 cursor-pointer">
                     <i class="fas fa-power-off mr-3"></i>
                     <span>Logout</span>
@@ -96,7 +96,7 @@
         </div>
         
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col ml-64">
             <!-- Top Header -->
             <header class="bg-white shadow-sm border-b">
                 <div class="flex items-center justify-between px-6 py-4">
@@ -300,6 +300,37 @@
         </div>
     </div>
     
+    <!-- Order Details Modal -->
+    <div x-show="showOrderModal" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Order Details</h3>
+                <div x-if="selectedTable && selectedTable.current_order">
+                    <p><strong>Order ID:</strong> <span x-text="selectedTable.current_order.id"></span></p>
+                    <p><strong>Total:</strong> <span x-text="selectedTable.current_order.total_amount"></span></p>
+                    <p><strong>Status:</strong> <span x-text="selectedTable.current_order.status"></span></p>
+                </div>
+                <div class="flex space-x-3 mt-6">
+                    <button @click="completeOrder" 
+                            class="flex-1 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors duration-200 cursor-pointer">
+                        Pay and Finish
+                    </button>
+                    <button @click="showOrderModal = false" 
+                            class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors duration-200 cursor-pointer">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Toast Notification -->
     <div x-show="showToast" 
          x-transition:enter="transition ease-out duration-300"
@@ -341,6 +372,7 @@
             return {
                 tables: tablesData,
                 showStatusModal: false,
+                showOrderModal: false,
                 selectedTable: null,
                 newStatus: 'available',
                 showToast: false,
@@ -429,11 +461,58 @@
                     }
                 },
                 
-                viewOrder(table) {
-                    console.log('View order clicked for table:', table);
-                    // View current order for this table
-                    if (table.current_order) {
-                        alert(`Viewing order: ${table.current_order.order_number}`);
+                async viewOrder(table) {
+                    if (!table.current_order) {
+                        this.showToastMessage('No active order for this table.', 'error');
+                        return;
+                    }
+
+                    this.selectedTable = table;
+                    const orderId = table.current_order.id;
+
+                    try {
+                        const response = await fetch(`/orders/${orderId}`);
+                        if (response.ok) {
+                            const orderDetails = await response.json();
+                            this.selectedTable.current_order = orderDetails;
+                            this.showOrderModal = true;
+                        } else {
+                            this.showToastMessage('Failed to fetch order details.', 'error');
+                        }
+                    } catch (error) {
+                        this.showToastMessage('An error occurred while fetching order details.', 'error');
+                    }
+                },
+
+                async completeOrder() {
+                    if (!this.selectedTable || !this.selectedTable.current_order) return;
+
+                    const orderId = this.selectedTable.current_order.id;
+
+                    try {
+                        const response = await fetch(`/orders/${orderId}/complete`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            }
+                        });
+
+                        if (response.ok) {
+                            const result = await response.json();
+                            if (result.success) {
+                                this.selectedTable.status = 'available';
+                                this.selectedTable.current_order = null;
+                                this.showOrderModal = false;
+                                this.showToastMessage('Order completed successfully!', 'success');
+                            } else {
+                                this.showToastMessage(result.message || 'Failed to complete order.', 'error');
+                            }
+                        } else {
+                            this.showToastMessage('Failed to complete order.', 'error');
+                        }
+                    } catch (error) {
+                        this.showToastMessage('An error occurred while completing the order.', 'error');
                     }
                 },
                 

@@ -94,4 +94,27 @@ class TablesController extends Controller
 
         return response()->json($orders);
     }
+
+    public function completeOrder(Request $request, Order $order)
+    {
+        try {
+            // Mark the order as complete
+            $order->update(['status' => 'completed']);
+
+            // Update the associated table's status to available
+            if ($order->table) {
+                $order->table->update(['status' => 'available']);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order completed and table is now available'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to complete order: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

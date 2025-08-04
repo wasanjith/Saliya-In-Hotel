@@ -116,4 +116,13 @@ class POSController extends Controller
             'message' => 'Order placed successfully!'
         ]);
     }
+
+    public function getOrderDetails(Order $order)
+    {
+        // Load the order with its items
+        $order->load('orderItems.foodItem');
+
+        // Return the order details as JSON
+        return response()->json($order);
+    }
 }

@@ -36,9 +36,9 @@
     </style>
 </head>
 <body class="bg-gray-100" x-data="posSystem()">
-    <div class="flex h-screen">
+    <div class="flex">
         <!-- Left Sidebar -->
-        <div class="w-64 bg-gray-800 text-white">
+        <div class="w-64 bg-gray-800 text-white flex flex-col fixed top-0 left-0 h-screen z-50">
             <!-- Logo -->
             <div class="p-4 border-b border-gray-700">
                 <div class="flex items-center space-x-2">
@@ -74,7 +74,7 @@
             </nav>
             
             <!-- Logout -->
-            <div class="absolute bottom-4 left-4 right-4">
+            <div class="mt-auto p-4">
                 <a href="#" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
                     <i class="fas fa-power-off mr-3"></i>
                     <span>Logout</span>
@@ -83,7 +83,7 @@
         </div>
         
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col ml-64">
             <!-- Top Header -->
             <header class="bg-white shadow-sm border-b">
                 <div class="flex items-center justify-between px-6 py-4">
