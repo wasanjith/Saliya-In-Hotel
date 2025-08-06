@@ -157,16 +157,11 @@ class POSController extends Controller
                 'subtotal' => $subtotal
             ]);
 
-            // Calculate tax and total (you can adjust tax rate as needed)
-            $taxRate = 0.10; // 10% tax for takeaway
-            $taxAmount = round($subtotal * $taxRate, 2);
-            $discountAmount = $request->discount_amount ?? 0;
-            $totalAmount = $request->total_amount ?? ($subtotal + $taxAmount - $discountAmount);
+            // Calculate total amount
+            $totalAmount = $request->total_amount ?? $subtotal;
 
             $order->update([
                 'subtotal' => $subtotal,
-                'tax_amount' => $taxAmount,
-                'discount_amount' => $discountAmount,
                 'total_amount' => $totalAmount,
                 'customer_paid' => $request->customer_paid ?? $totalAmount,
                 'balance_returned' => $request->balance_returned ?? 0,
@@ -189,8 +184,6 @@ class POSController extends Controller
                 'payment_method' => $order->payment_method,
                 'order_items_count' => $order->orderItems()->count(),
                 'subtotal' => $order->subtotal,
-                'tax_amount' => $order->tax_amount,
-                'discount_amount' => $order->discount_amount,
                 'total_amount' => $order->total_amount,
                 'order_items_details' => $order->orderItems()->get()->toArray()
             ]);

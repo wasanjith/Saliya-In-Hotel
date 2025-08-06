@@ -325,20 +325,8 @@
                                 <h4 class="font-semibold text-gray-800 mb-2">Order Summary</h4>
                                 <div class="space-y-1 text-sm">
                                     <div class="flex justify-between">
-                                        <span class="text-gray-600">Sub total:</span>
+                                        <span class="text-gray-600">Total:</span>
                                         <span class="font-medium" x-text="'Rs. ' + Math.round(subtotal)"></span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Tax (14%):</span>
-                                        <span class="font-medium" x-text="'Rs. ' + Math.round(subtotal * 0.14)"></span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Discount (12%):</span>
-                                        <span class="font-medium" x-text="'Rs. ' + Math.round(subtotal * 0.12)"></span>
-                                    </div>
-                                    <div class="flex justify-between text-base font-bold text-blue-600 border-t border-gray-200 pt-1">
-                                        <span>Total:</span>
-                                        <span x-text="'Rs. ' + Math.round(total)"></span>
                                     </div>
                                 </div>
                             </div>
@@ -543,26 +531,8 @@
                     <!-- Amount Breakdown -->
                     <div class="bg-gray-50 rounded-lg p-4 space-y-3">
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Subtotal:</span>
-                            <span class="font-medium">Rs. <span x-text="Math.round(takeawayPaymentInfo.subtotal)"></span></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Tax (10%):</span>
-                            <span class="font-medium">Rs. <span x-text="Math.round(takeawayPaymentInfo.tax)"></span></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Discount:</span>
-                            <div class="flex items-center space-x-2">
-                                <input type="number" x-model="takeawayPaymentInfo.discount" @input="calculateTakeawayTotals()"
-                                       class="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-right"
-                                       min="0" step="0.01">
-                                <span class="text-sm">Rs.</span>
-                            </div>
-                        </div>
-                        <hr class="border-gray-300">
-                        <div class="flex justify-between text-lg font-bold">
-                            <span>Total Amount:</span>
-                            <span class="text-blue-600">Rs. <span x-text="Math.round(takeawayPaymentInfo.totalAmount)"></span></span>
+                            <span class="text-gray-600">Total Amount:</span>
+                            <span class="text-lg font-bold text-blue-600">Rs. <span x-text="Math.round(takeawayPaymentInfo.totalAmount)"></span></span>
                         </div>
                     </div>
 
@@ -716,6 +686,46 @@
         </div>
     </div>
 
+    <!-- Print Invoice Section (shown after successful payment) - Moved outside modal -->
+    <div x-show="showPrintOptions" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div class="text-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Print Invoice</h3>
+                <p class="text-gray-600">Order #<span x-text="completedOrderId"></span> completed successfully!</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <button @click="printThermalInvoice()" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg text-sm font-medium">
+                    <i class="fas fa-print mr-2"></i>
+                    Thermal Printer
+                </button>
+                <button @click="printWebInvoice()" 
+                        class="bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg text-sm font-medium">
+                    <i class="fas fa-file-pdf mr-2"></i>
+                    Web Print
+                </button>
+                <button @click="downloadThermalInvoice()" 
+                        class="bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg text-sm font-medium">
+                    <i class="fas fa-download mr-2"></i>
+                    Download TXT
+                </button>
+                <button @click="closePrintOptions()" 
+                        class="bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-lg text-sm font-medium">
+                    <i class="fas fa-times mr-2"></i>
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function posSystem() {
             return {
@@ -728,6 +738,8 @@
                 orderNumber: Math.floor(Math.random() * 900000) + 100000,
                 showTakeawayModal: false,
                 showPortionModal: false,
+                showPrintOptions: false,
+                completedOrderId: null,
                 selectedFoodItem: null,
                 selectedPortion: 'full',
                 portionQuantity: 1,
@@ -770,9 +782,7 @@
                 },
                 
                 get total() {
-                    const tax = Math.round(this.subtotal * 0.14);
-                    const discount = Math.round(this.subtotal * 0.12);
-                    return this.subtotal + tax - discount;
+                    return this.subtotal;
                 },
                 
                 selectCategory(categoryId) {
@@ -956,10 +966,18 @@
                         const result = await response.json();
                         
                         if (result.success) {
-                            // Store order ID for table assignment
+                            alert('Dine-in order created successfully!');
+                            
+                            // Store the completed order ID for printing
+                            this.completedOrderId = result.order.id;
+                            this.showPrintOptions = true;
+                            
+                            // Clear order items
+                            this.orderItems = [];
+                            this.orderNumber = Math.floor(Math.random() * 900000) + 100000;
+                            
+                            // Store order ID for table assignment (optional - user can still go to tables page)
                             sessionStorage.setItem('pendingOrderId', result.order.id);
-                            // Redirect to table map
-                            window.location.href = '/tables?order_id=' + result.order.id;
                         } else {
                             alert('Error creating order: ' + result.message);
                         }
@@ -978,7 +996,7 @@
                         return;
                     }
                     
-                    // For delivery orders, proceed with normal flow
+                    // For dine-in and delivery orders, proceed with normal flow
                     const orderData = {
                         order_type: this.orderType,
                         payment_method: this.paymentMethod,
@@ -1004,6 +1022,12 @@
                         
                         if (result.success) {
                             alert('Order placed successfully!');
+                            
+                            // Store the completed order ID for printing
+                            this.completedOrderId = result.order.id;
+                            this.showPrintOptions = true;
+                            
+                            // Clear order items
                             this.orderItems = [];
                             this.orderNumber = Math.floor(Math.random() * 900000) + 100000;
                         } else {
@@ -1023,12 +1047,9 @@
                 
                 calculateTakeawayTotals() {
                     const subtotal = this.orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-                    const tax = subtotal * 0.1;
-                    const discount = parseFloat(this.takeawayPaymentInfo.discount || 0);
                     
                     this.takeawayPaymentInfo.subtotal = subtotal;
-                    this.takeawayPaymentInfo.tax = tax;
-                    this.takeawayPaymentInfo.totalAmount = subtotal + tax - discount;
+                    this.takeawayPaymentInfo.totalAmount = subtotal;
                     this.takeawayPaymentInfo.paidAmount = this.takeawayPaymentInfo.totalAmount;
                     this.calculateTakeawayBalance();
                 },
@@ -1048,7 +1069,6 @@
                         payment_method: this.takeawayPaymentInfo.method,
                         customer_name: this.takeawayCustomerInfo.name,
                         customer_phone: this.takeawayCustomerInfo.phone,
-                        discount_amount: parseFloat(this.takeawayPaymentInfo.discount || 0),
                         customer_paid: parseFloat(this.takeawayPaymentInfo.paidAmount),
                         balance_returned: Math.max(0, this.takeawayPaymentInfo.balance),
                         total_amount: this.takeawayPaymentInfo.totalAmount,
@@ -1076,16 +1096,18 @@
                             alert('Takeaway order completed successfully!');
                             this.showTakeawayModal = false;
                             
+                            // Store the completed order ID for printing
+                            this.completedOrderId = result.order.id;
+                            this.showPrintOptions = true;
+                            
                             // Reset form
                             this.takeawayCustomerInfo = { name: '', phone: '' };
                             this.takeawayPaymentInfo = { 
                                 method: 'cash', 
-                                discount: 0, 
                                 paidAmount: 0, 
                                 totalAmount: 0, 
                                 balance: 0,
-                                subtotal: 0,
-                                tax: 0
+                                subtotal: 0
                             };
                             
                             // Clear order items
@@ -1132,6 +1154,171 @@
                     this.takeawayCustomerInfo.phone = '';
                     this.customerSuggestions = [];
                     this.showCustomerSuggestions = false;
+                },
+                
+                // Print Invoice Functions
+                async printThermalInvoice() {
+                    if (!this.completedOrderId) {
+                        alert('No completed order found to print.');
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch('/print/thermal-invoice', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                order_id: this.completedOrderId
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            // Open a new window to show the thermal printer formatted text
+                            const printWindow = window.open('', '_blank', 'width=400,height=600,scrollbars=yes');
+                            printWindow.document.write(`
+                                <!DOCTYPE html>
+                                <html>
+                                <head>
+                                    <title>Thermal Printer Preview - Order #${this.completedOrderId}</title>
+                                    <style>
+                                        body {
+                                            font-family: 'Courier New', monospace;
+                                            font-size: 12px;
+                                            line-height: 1.2;
+                                            background: #f5f5f5;
+                                            margin: 20px;
+                                            padding: 20px;
+                                        }
+                                        .preview-container {
+                                            background: white;
+                                            border: 2px solid #333;
+                                            border-radius: 8px;
+                                            padding: 20px;
+                                            max-width: 400px;
+                                            margin: 0 auto;
+                                            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                                        }
+                                        .preview-header {
+                                            text-align: center;
+                                            margin-bottom: 20px;
+                                            padding-bottom: 10px;
+                                            border-bottom: 1px solid #ddd;
+                                        }
+                                        .preview-content {
+                                            white-space: pre-wrap;
+                                            font-family: 'Courier New', monospace;
+                                            font-size: 11px;
+                                            line-height: 1.1;
+                                            background: #fafafa;
+                                            padding: 15px;
+                                            border: 1px solid #ddd;
+                                            border-radius: 4px;
+                                            max-height: 400px;
+                                            overflow-y: auto;
+                                        }
+                                        .print-button {
+                                            display: block;
+                                            width: 100%;
+                                            background: #007cba;
+                                            color: white;
+                                            border: none;
+                                            padding: 10px;
+                                            border-radius: 4px;
+                                            margin-top: 15px;
+                                            cursor: pointer;
+                                            font-size: 14px;
+                                        }
+                                        .print-button:hover {
+                                            background: #005a87;
+                                        }
+                                        .info-text {
+                                            font-size: 11px;
+                                            color: #666;
+                                            text-align: center;
+                                            margin-top: 10px;
+                                        }
+                                    </style>
+                                </head>
+                                <body>
+                                    <div class="preview-container">
+                                        <div class="preview-header">
+                                            <h2>Thermal Printer Preview</h2>
+                                            <p>Order #${this.completedOrderId} - ${new Date().toLocaleString()}</p>
+                                        </div>
+                                        <div class="preview-content">${result.invoice_data}</div>
+                                        <button class="print-button" onclick="window.print()">
+                                            <i class="fas fa-print"></i> Print Preview
+                                        </button>
+                                        <div class="info-text">
+                                            This shows how the invoice will appear on your 80mm thermal printer.<br>
+                                            The text is formatted for 32-character width thermal paper.
+                                        </div>
+                                    </div>
+                                </body>
+                                </html>
+                            `);
+                            printWindow.document.close();
+                        } else {
+                            alert('Error printing invoice: ' + result.message);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error printing invoice. Please try again.');
+                    }
+                },
+                
+                async printWebInvoice() {
+                    if (!this.completedOrderId) {
+                        alert('No completed order found to print.');
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch('/print/web-invoice', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                order_id: this.completedOrderId
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            const printWindow = window.open('', '_blank');
+                            printWindow.document.write(result.html_invoice);
+                            printWindow.document.close();
+                            printWindow.print();
+                        } else {
+                            alert('Error printing invoice: ' + result.message);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error printing invoice. Please try again.');
+                    }
+                },
+                
+                downloadThermalInvoice() {
+                    if (!this.completedOrderId) {
+                        alert('No completed order found to download.');
+                        return;
+                    }
+                    
+                    // Download the thermal invoice as text file
+                    window.open(`/print/download-thermal/${this.completedOrderId}`, '_blank');
+                },
+                
+                closePrintOptions() {
+                    this.showPrintOptions = false;
+                    this.completedOrderId = null;
                 }
             }
         }

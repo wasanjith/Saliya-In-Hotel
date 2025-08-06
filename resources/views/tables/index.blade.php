@@ -698,6 +698,46 @@
                         Complete Payment
                     </button>
                 </div>
+                
+                <!-- Print Invoice Section (shown after successful payment) - Moved outside modal -->
+                <div x-show="showPrintOptions" 
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <div class="text-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-900">Print Invoice</h3>
+                            <p class="text-gray-600">Order #<span x-text="completedOrderId"></span> completed successfully!</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <button @click="printThermalInvoice()" 
+                                    class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg text-sm font-medium">
+                                <i class="fas fa-print mr-2"></i>
+                                Thermal Printer
+                            </button>
+                            <button @click="printWebInvoice()" 
+                                    class="bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg text-sm font-medium">
+                                <i class="fas fa-file-pdf mr-2"></i>
+                                Web Print
+                            </button>
+                            <button @click="downloadThermalInvoice()" 
+                                    class="bg-purple-600 hover:bg-purple-700 text-white py-3 px-4 rounded-lg text-sm font-medium">
+                                <i class="fas fa-download mr-2"></i>
+                                Download TXT
+                            </button>
+                            <button @click="closePrintOptions()" 
+                                    class="bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-lg text-sm font-medium">
+                                <i class="fas fa-times mr-2"></i>
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -712,6 +752,8 @@
                 showConfirmModal: false,
                 showTableInfoModal: false,
                 showCloseOrderModal: false,
+                showPrintOptions: false,
+                completedOrderId: null,
                 selectedTableInfo: null,
                 orderToClose: null,
                 orderItems: [],
@@ -1074,6 +1116,10 @@
                             alert('Order completed successfully!');
                             this.showCloseOrderModal = false;
                             
+                            // Store the completed order ID for printing
+                            this.completedOrderId = this.orderToClose.id;
+                            this.showPrintOptions = true;
+                            
                             // Reset form
                             this.customerInfo = { name: '', phone: '' };
                             this.paymentInfo = { method: 'cash', discount: 0, paidAmount: 0, totalAmount: 0, balance: 0 };
@@ -1123,6 +1169,171 @@
                 
                 goBack() {
                     window.location.href = '/pos';
+                },
+                
+                // Print Invoice Functions
+                async printThermalInvoice() {
+                    if (!this.completedOrderId) {
+                        alert('No completed order found to print.');
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch('/print/thermal-invoice', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                order_id: this.completedOrderId
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            // Open a new window to show the thermal printer formatted text
+                            const printWindow = window.open('', '_blank', 'width=400,height=600,scrollbars=yes');
+                            printWindow.document.write(`
+                                <!DOCTYPE html>
+                                <html>
+                                <head>
+                                    <title>Thermal Printer Preview - Order #${this.completedOrderId}</title>
+                                    <style>
+                                        body {
+                                            font-family: 'Courier New', monospace;
+                                            font-size: 12px;
+                                            line-height: 1.2;
+                                            background: #f5f5f5;
+                                            margin: 20px;
+                                            padding: 20px;
+                                        }
+                                        .preview-container {
+                                            background: white;
+                                            border: 2px solid #333;
+                                            border-radius: 8px;
+                                            padding: 20px;
+                                            max-width: 400px;
+                                            margin: 0 auto;
+                                            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                                        }
+                                        .preview-header {
+                                            text-align: center;
+                                            margin-bottom: 20px;
+                                            padding-bottom: 10px;
+                                            border-bottom: 1px solid #ddd;
+                                        }
+                                        .preview-content {
+                                            white-space: pre-wrap;
+                                            font-family: 'Courier New', monospace;
+                                            font-size: 11px;
+                                            line-height: 1.1;
+                                            background: #fafafa;
+                                            padding: 15px;
+                                            border: 1px solid #ddd;
+                                            border-radius: 4px;
+                                            max-height: 400px;
+                                            overflow-y: auto;
+                                        }
+                                        .print-button {
+                                            display: block;
+                                            width: 100%;
+                                            background: #007cba;
+                                            color: white;
+                                            border: none;
+                                            padding: 10px;
+                                            border-radius: 4px;
+                                            margin-top: 15px;
+                                            cursor: pointer;
+                                            font-size: 14px;
+                                        }
+                                        .print-button:hover {
+                                            background: #005a87;
+                                        }
+                                        .info-text {
+                                            font-size: 11px;
+                                            color: #666;
+                                            text-align: center;
+                                            margin-top: 10px;
+                                        }
+                                    </style>
+                                </head>
+                                <body>
+                                    <div class="preview-container">
+                                        <div class="preview-header">
+                                            <h2>Thermal Printer Preview</h2>
+                                            <p>Order #${this.completedOrderId} - ${new Date().toLocaleString()}</p>
+                                        </div>
+                                        <div class="preview-content">${result.invoice_data}</div>
+                                        <button class="print-button" onclick="window.print()">
+                                            <i class="fas fa-print"></i> Print Preview
+                                        </button>
+                                        <div class="info-text">
+                                            This shows how the invoice will appear on your 80mm thermal printer.<br>
+                                            The text is formatted for 32-character width thermal paper.
+                                        </div>
+                                    </div>
+                                </body>
+                                </html>
+                            `);
+                            printWindow.document.close();
+                        } else {
+                            alert('Error printing invoice: ' + result.message);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error printing invoice. Please try again.');
+                    }
+                },
+                
+                async printWebInvoice() {
+                    if (!this.completedOrderId) {
+                        alert('No completed order found to print.');
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch('/print/web-invoice', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                order_id: this.completedOrderId
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            const printWindow = window.open('', '_blank');
+                            printWindow.document.write(result.html_invoice);
+                            printWindow.document.close();
+                            printWindow.print();
+                        } else {
+                            alert('Error printing invoice: ' + result.message);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error printing invoice. Please try again.');
+                    }
+                },
+                
+                downloadThermalInvoice() {
+                    if (!this.completedOrderId) {
+                        alert('No completed order found to download.');
+                        return;
+                    }
+                    
+                    // Download the thermal invoice as text file
+                    window.open(`/print/download-thermal/${this.completedOrderId}`, '_blank');
+                },
+                
+                closePrintOptions() {
+                    this.showPrintOptions = false;
+                    this.completedOrderId = null;
                 }
             }
         }

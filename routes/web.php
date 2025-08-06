@@ -5,6 +5,7 @@ use App\Http\Controllers\POSController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PrinterController;
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -71,6 +72,12 @@ Route::middleware(['auth.pos'])->group(function () {
     
     // Override the orders.show route to use POSController for JSON responses
     Route::get('/orders/{order}', [POSController::class, 'getOrderDetails'])->name('orders.show');
+    
+    // Printer Routes
+    Route::post('/print/thermal-invoice', [PrinterController::class, 'printThermalInvoice'])->name('print.thermal-invoice');
+    Route::post('/print/web-invoice', [PrinterController::class, 'printWebInvoice'])->name('print.web-invoice');
+    Route::get('/print/invoice/{orderId}', [PrinterController::class, 'showInvoice'])->name('print.show-invoice');
+    Route::get('/print/download-thermal/{orderId}', [PrinterController::class, 'downloadThermalInvoice'])->name('print.download-thermal');
     
     // API Routes for Customer Search
     Route::get('/api/customers', [CustomerController::class, 'apiSearch'])->name('api.customers.search');

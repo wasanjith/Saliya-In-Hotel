@@ -71,18 +71,6 @@ class OrderResource extends Resource
                             ->prefix('Rs.')
                             ->step(1),
                         
-                        Forms\Components\TextInput::make('tax_amount')
-                            ->numeric()
-                            ->prefix('Rs.')
-                            ->step(1)
-                            ->default(0),
-                        
-                        Forms\Components\TextInput::make('discount_amount')
-                            ->numeric()
-                            ->prefix('Rs.')
-                            ->step(1)
-                            ->default(0),
-                        
                         Forms\Components\TextInput::make('total_amount')
                             ->required()
                             ->numeric()
