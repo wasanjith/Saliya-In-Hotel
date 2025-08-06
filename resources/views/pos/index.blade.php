@@ -54,7 +54,7 @@
                         <i class="fas fa-home mr-3"></i>
                         <span>Home</span>
                     </a>
-                    <a href="#" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                    <a href="/admin" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
                         <i class="fas fa-chart-bar mr-3"></i>
                         <span>Dashboard</span>
                     </a>
@@ -76,10 +76,13 @@
             
             <!-- Logout -->
             <div class="mt-auto p-4">
-                <a href="#" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
-                    <i class="fas fa-power-off mr-3"></i>
-                    <span>Logout</span>
-                </a>
+                <form method="POST" action="{{ route('logout') }}" class="w-full">
+                    @csrf
+                    <button type="submit" class="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                        <i class="fas fa-power-off mr-3"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
             </div>
         </div>
         
@@ -87,23 +90,20 @@
         <div class="flex-1 flex flex-col ml-64">
             <!-- Top Header -->
             <header class="bg-white shadow-sm border-b">
-                <div class="flex items-center justify-between px-6 py-4">
-                    <!-- Search Bar -->
-                    <div class="flex-1 max-w-md">
-                        <div class="relative">
-                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" placeholder="Search in menu" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <i class="fas fa-barcode absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        </div>
-                    </div>
-                    
+                <div class="flex items-center justify-end px-6 py-4">
                     <!-- Right Icons -->
                     <div class="flex items-center space-x-4">
                         <i class="fas fa-globe text-gray-600 text-xl"></i>
                         <i class="fas fa-bell text-gray-600 text-xl"></i>
                         <div class="flex items-center space-x-2">
                             <img src="https://via.placeholder.com/32x32" alt="Profile" class="w-8 h-8 rounded-full">
-                            <span class="text-gray-700">Hello, Osama ali</span>
+                            <span class="text-gray-700">Hello, {{ Auth::user()->name }}</span>
+                            <form method="POST" action="{{ route('logout') }}" class="inline">
+                                @csrf
+                                <button type="submit" class="text-gray-600 hover:text-gray-800 ml-2">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -205,11 +205,6 @@
                     <!-- Order Type -->
                     <div class="p-4 border-b border-gray-200">
                         <div class="flex space-x-2">
-                            <button @click="orderType = 'delivery'" 
-                                    :class="orderType === 'delivery' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
-                                    class="flex-1 py-2 px-3 rounded-lg text-sm font-medium">
-                                Delivery
-                            </button>
                             <button @click="handleDineInClick()" 
                                     :class="orderType === 'dine_in' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
                                     class="flex-1 py-2 px-3 rounded-lg text-sm font-medium">
@@ -221,8 +216,6 @@
                                 Takeaway
                             </button>
                         </div>
-                        
-
                     </div>
                     
                     <!-- Order Items -->
@@ -234,6 +227,30 @@
                             </div>
                         </template>
                         
+                        <!-- Compact Order Summary - Only show when items exist -->
+                        <template x-if="orderItems.length > 0">
+                            <div class="mb-4 p-3 bg-gray-50 rounded-lg border">
+                                <div class="space-y-1 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Sub total:</span>
+                                        <span class="font-medium" x-text="'Rs. ' + Math.round(subtotal)"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Tax (14%):</span>
+                                        <span class="font-medium" x-text="'Rs. ' + Math.round(subtotal * 0.14)"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Discount (12%):</span>
+                                        <span class="font-medium" x-text="'Rs. ' + Math.round(subtotal * 0.12)"></span>
+                                    </div>
+                                    <div class="flex justify-between text-base font-bold text-blue-600 border-t border-gray-200 pt-1">
+                                        <span>Total:</span>
+                                        <span x-text="'Rs. ' + Math.round(total)"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        
                         <template x-for="(item, index) in orderItems" :key="index">
                             <div class="order-item bg-gray-50 rounded-lg p-3 mb-3">
                                 <div class="flex items-center space-x-3">
@@ -242,7 +259,7 @@
                                     </div>
                                     <div class="flex-1">
                                         <h4 class="font-medium" x-text="item.name"></h4>
-                                                                                 <p class="text-sm text-gray-600" x-text="'Rs. ' + Math.round(item.price)"></p>
+                                        <p class="text-sm text-gray-600" x-text="'Rs. ' + Math.round(item.price)"></p>
                                     </div>
                                     <div class="flex items-center space-x-2">
                                         <button @click="decreaseQuantity(index)" 
@@ -261,33 +278,14 @@
                                         <button @click="applyDiscount(index)" class="text-xs text-blue-600 hover:underline">Discount</button>
                                         <button @click="removeItem(index)" class="text-xs text-red-600 hover:underline">Remove</button>
                                     </div>
-                                                                         <span class="font-medium" x-text="'Rs. ' + Math.round(item.price * item.quantity)"></span>
+                                    <span class="font-medium" x-text="'Rs. ' + Math.round(item.price * item.quantity)"></span>
                                 </div>
                             </div>
                         </template>
                     </div>
                     
-                    <!-- Order Summary -->
+                    <!-- Payment Section -->
                     <div class="p-4 border-t border-gray-200">
-                        <div class="space-y-2 mb-4">
-                            <div class="flex justify-between">
-                                <span>Sub total:</span>
-                                                                 <span x-text="'Rs. ' + Math.round(subtotal)"></span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Tax:</span>
-                                <span>14%</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Discount:</span>
-                                <span>12%</span>
-                            </div>
-                            <div class="flex justify-between text-lg font-bold text-blue-600">
-                                <span>Total:</span>
-                                                                 <span x-text="'Rs. ' + Math.round(total)"></span>
-                            </div>
-                        </div>
-                        
                         <!-- Payment Methods -->
                         <div class="mb-4">
                             <div class="flex space-x-2">
@@ -318,7 +316,7 @@
                         <button @click="processOrder()" 
                                 :disabled="orderItems.length === 0"
                                 class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                                                         Pay Rs. <span x-text="Math.round(total)"></span>
+                            Pay Rs. <span x-text="Math.round(total)"></span>
                         </button>
                     </div>
                 </div>

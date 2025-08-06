@@ -35,6 +35,12 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Pages\Dashboard::class,
             ])
+            ->navigationItems([
+                \Filament\Navigation\NavigationItem::make('POS System')
+                    ->url('/pos')
+                    ->icon('heroicon-o-shopping-cart')
+                    ->sort(100),
+            ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,

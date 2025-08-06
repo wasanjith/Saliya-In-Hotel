@@ -20,8 +20,9 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
-        // Seed categories, food items, and tables
+        // Seed admin users, categories, food items, and tables
         $this->call([
+            AdminUserSeeder::class,
             CategorySeeder::class,
             FoodItemSeeder::class,
             TableSeeder::class,
