@@ -220,6 +220,10 @@ class POSController extends Controller
 
 
         // Return the order details as JSON
-        return response()->json($orderData);
+        return response()->json([
+            'success' => true,
+            'order' => $orderData,
+            'order_items' => $allItems
+        ]);
     }
 }

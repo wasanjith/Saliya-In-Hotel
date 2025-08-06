@@ -66,6 +66,10 @@
                         <i class="fas fa-users mr-3"></i>
                         <span>Customers</span>
                     </a>
+                    <a href="/tables" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                        <i class="fas fa-chair mr-3"></i>
+                        <span>Tables</span>
+                    </a>
 
                 </div>
             </nav>
@@ -420,8 +424,50 @@
                     alert('Discount feature coming soon!');
                 },
                 
-                handleDineInClick() {
+                async handleDineInClick() {
                     this.orderType = 'dine_in';
+                    
+                    // Check if there are items in the cart
+                    if (this.orderItems.length === 0) {
+                        alert('Please add items to your order first!');
+                        return;
+                    }
+                    
+                    // Save the order first
+                    const orderData = {
+                        order_type: 'dine_in',
+                        payment_method: 'cash', // Default for dine-in
+                        items: this.orderItems.map(item => ({
+                            food_item_id: item.id,
+                            quantity: item.quantity,
+                            notes: item.notes || null
+                        }))
+                    };
+                    
+                    try {
+                        const response = await fetch('/pos/order', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify(orderData)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            // Store order ID for table assignment
+                            sessionStorage.setItem('pendingOrderId', result.order.id);
+                            // Redirect to table map
+                            window.location.href = '/tables?order_id=' + result.order.id;
+                        } else {
+                            alert('Error creating order: ' + result.message);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error creating order. Please try again.');
+                    }
                 },
                 
                 async processOrder() {
