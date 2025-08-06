@@ -115,7 +115,19 @@
         <div class="flex-1 flex flex-col ml-64 h-screen">
             <!-- Top Header -->
             <header class="bg-white shadow-sm border-b flex-shrink-0">
-                <div class="flex items-center justify-end px-6 py-4">
+                <div class="flex items-center justify-between px-6 py-4">
+                    <!-- Date and Time -->
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-calendar-alt text-blue-600"></i>
+                            <span class="text-gray-700 font-medium" id="current-date"></span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-clock text-green-600"></i>
+                            <span class="text-gray-700 font-medium" id="current-time"></span>
+                        </div>
+                    </div>
+                    
                     <!-- User Profile -->
                     <div class="flex items-center space-x-3">
                         <div class="flex items-center space-x-2">
@@ -1123,6 +1135,46 @@
                 }
             }
         }
+
+        // Date and Time Update Function
+        function updateDateTime() {
+            const now = new Date();
+            
+            // Format date
+            const dateOptions = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            const dateString = now.toLocaleDateString('en-US', dateOptions);
+            
+            // Format time
+            const timeOptions = { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: true 
+            };
+            const timeString = now.toLocaleTimeString('en-US', timeOptions);
+            
+            // Update the DOM elements
+            const dateElement = document.getElementById('current-date');
+            const timeElement = document.getElementById('current-time');
+            
+            if (dateElement) {
+                dateElement.textContent = dateString;
+            }
+            if (timeElement) {
+                timeElement.textContent = timeString;
+            }
+        }
+
+        // Update date and time immediately and then every second
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+        });
     </script>
 </body>
 </html> 

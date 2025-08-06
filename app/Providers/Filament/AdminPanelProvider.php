@@ -17,6 +17,14 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use App\Filament\Widgets\TotalCustomersWidget;
+use App\Filament\Widgets\TotalFoodItemsWidget;
+use App\Filament\Widgets\TotalOrdersWidget;
+use App\Filament\Widgets\TotalRevenueWidget;
+use App\Filament\Widgets\MonthlyRevenueChart;
+use App\Filament\Widgets\FoodItemsSoldChart;
+use App\Filament\Widgets\BusinessStatsOverview;
+use App\Filament\Widgets\TopSellingFoodItemsChart;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -43,8 +51,14 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                TotalCustomersWidget::class,
+                TotalFoodItemsWidget::class,
+                TotalOrdersWidget::class,
+                TotalRevenueWidget::class,
+                MonthlyRevenueChart::class,
+                FoodItemsSoldChart::class,
+                BusinessStatsOverview::class,
+                TopSellingFoodItemsChart::class,
             ])
             ->middleware([
                 EncryptCookies::class,

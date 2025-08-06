@@ -183,40 +183,44 @@
         .customer-suggestion-item:active {
             background-color: #e5e7eb;
         }
+        
+        .sidebar-gradient {
+            background: linear-gradient(135deg, #008200 0%, #006600 50%, #004400 100%);
+        }
     </style>
 </head>
 <body class="bg-gray-100" x-data="tableMapSystem()">
     <div class="flex">
         <!-- Left Sidebar -->
-        <div class="w-64 bg-gray-800 text-white flex flex-col fixed top-0 left-0 h-screen z-50">
+        <div class="w-64 sidebar-gradient text-white flex flex-col fixed top-0 left-0 h-screen z-50">
             <!-- Logo -->
-            <div class="p-4 border-b border-gray-700">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-fish text-blue-400 text-2xl"></i>
-                    <span class="text-xl font-bold">SEAFOOD</span>
+            <div class="p-4 border-b border-green-700">
+                <div class="flex items-center space-x-3">
+                    <img src="{{ asset('images/logoo.saliya.png') }}" alt="Saliya Inn Logo" class="w-10 h-10 rounded-lg object-cover">
+                    <span class="text-xl font-bold">Saliya Inn</span>
                 </div>
             </div>
             
             <!-- Navigation -->
             <nav class="mt-6">
                 <div class="px-4 space-y-2">
-                    <a href="/pos" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                    <a href="/pos" class="flex items-center px-4 py-3 text-green-200 hover:bg-green-700 rounded-lg">
                         <i class="fas fa-home mr-3"></i>
                         <span>Home</span>
                     </a>
-                    <a href="#" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                    <a href="/admin" class="flex items-center px-4 py-3 text-green-200 hover:bg-green-700 rounded-lg">
                         <i class="fas fa-chart-bar mr-3"></i>
                         <span>Dashboard</span>
                     </a>
-                    <a href="/orders" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                    <a href="/orders" class="flex items-center px-4 py-3 text-green-200 hover:bg-green-700 rounded-lg">
                         <i class="fas fa-shopping-bag mr-3"></i>
                         <span>Orders</span>
                     </a>
-                    <a href="/customers" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                    <a href="/customers" class="flex items-center px-4 py-3 text-green-200 hover:bg-green-700 rounded-lg">
                         <i class="fas fa-users mr-3"></i>
                         <span>Customers</span>
                     </a>
-                    <a href="/tables" class="flex items-center px-4 py-3 text-blue-400 bg-blue-900 rounded-lg">
+                    <a href="/tables" class="flex items-center px-4 py-3 text-green-200 bg-green-800 rounded-lg">
                         <i class="fas fa-chair mr-3"></i>
                         <span>Tables</span>
                     </a>
@@ -225,10 +229,13 @@
             
             <!-- Logout -->
             <div class="mt-auto p-4">
-                <a href="#" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
-                    <i class="fas fa-power-off mr-3"></i>
-                    <span>Logout</span>
-                </a>
+                <form method="POST" action="{{ route('logout') }}" class="w-full">
+                    @csrf
+                    <button type="submit" class="w-full flex items-center px-4 py-3 text-green-200 hover:bg-green-700 rounded-lg">
+                        <i class="fas fa-power-off mr-3"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
             </div>
         </div>
         
@@ -250,6 +257,20 @@
                     
                     <!-- Right Icons -->
                     <div class="flex items-center space-x-4">
+                        <!-- User Profile -->
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-user-circle text-gray-600 text-2xl"></i>
+                                <span class="text-gray-700 font-medium">Hello, {{ Auth::user()->name }}</span>
+                            </div>
+                            <form method="POST" action="{{ route('logout') }}" class="inline">
+                                @csrf
+                                <button type="submit" class="text-gray-600 hover:text-gray-800 ml-2">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                </button>
+                            </form>
+                        </div>
+                        
                         <!-- Legend -->
                         <div class="flex items-center space-x-3 text-sm">
                             <div class="legend-item">
@@ -272,11 +293,6 @@
                         <!-- Header Icons -->
                         <i class="fas fa-globe text-gray-600 text-xl"></i>
                         <i class="fas fa-bell text-gray-600 text-xl"></i>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                                <span class="text-white text-sm font-medium">A</span>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </header>

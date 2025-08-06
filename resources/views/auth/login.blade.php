@@ -55,9 +55,7 @@
         <!-- Logo and Title -->
         <div class="text-center">
             <div class="flex justify-center mb-3">
-                <div class="w-16 h-16 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center shadow-2xl">
-                    <i class="fas fa-utensils text-2xl text-white"></i>
-                </div>
+                <img src="/images/logoo.saliya.png" alt="Saliya Inn Logo" class="w-24 h-24 object-contain drop-shadow-2xl">
             </div>
             <h2 class="text-2xl font-bold text-white mb-1 drop-shadow-2xl">SALIYA INN</h2>
             <p class="text-white/90 text-lg font-semibold">RESTAURANT</p>
