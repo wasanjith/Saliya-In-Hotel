@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->foreignId('table_id')->nullable()->constrained()->onDelete('set null');
+            $table->decimal('customer_paid', 10, 2)->nullable()->after('total_amount');
+            $table->decimal('balance_returned', 10, 2)->nullable()->after('customer_paid');
+            $table->timestamp('completed_at')->nullable()->after('updated_at');
         });
     }
 
@@ -22,8 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropForeign(['table_id']);
-            $table->dropColumn('table_id');
+            $table->dropColumn(['customer_paid', 'balance_returned', 'completed_at']);
         });
     }
 };

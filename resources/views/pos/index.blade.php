@@ -66,10 +66,7 @@
                         <i class="fas fa-users mr-3"></i>
                         <span>Customers</span>
                     </a>
-                    <a href="{{ route('tables.index') }}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
-                        <i class="fas fa-table mr-3"></i>
-                        <span>Tables</span>
-                    </a>
+
                 </div>
             </nav>
             
@@ -193,9 +190,6 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <h3 class="text-lg font-semibold">Order list</h3>
-                                <div x-show="existingOrderId" class="text-xs text-blue-600 font-medium mt-1">
-                                    Updating existing order
-                                </div>
                             </div>
                             <div class="text-sm text-gray-500">
                                 Transaction #<span x-text="orderNumber"></span>
@@ -224,27 +218,7 @@
                             </button>
                         </div>
                         
-                        <!-- Selected Table Display -->
-                        <template x-if="selectedTable">
-                            <div class="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-table text-green-600 mr-2"></i>
-                                        <span class="text-sm font-medium text-green-800">
-                                            Selected: <span x-text="selectedTable.name"></span>
-                                        </span>
-                                    </div>
-                                    <button @click="selectedTable = null" 
-                                            class="text-green-600 hover:text-green-800">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <div class="text-xs text-green-600 mt-1">
-                                    <span x-text="selectedTable.capacity + ' seats'"></span> • 
-                                    <span x-text="selectedTable.location"></span>
-                                </div>
-                            </div>
-                        </template>
+
                     </div>
                     
                     <!-- Order Items -->
@@ -350,20 +324,14 @@
 
     <script>
         function posSystem() {
-            // Get order_id from URL parameters if present
-            const urlParams = new URLSearchParams(window.location.search);
-            const existingOrderId = urlParams.get('order_id');
-            
             return {
                 selectedCategory: 'all',
-                orderType: existingOrderId && @json($selectedTable) ? 'dine_in' : 'takeaway', // Auto-set to dine_in if coming from table assignment
+                orderType: 'takeaway',
                 paymentMethod: 'cash',
                 orderItems: [],
                 favoriteItems: [],
                 showFavorites: false,
                 orderNumber: Math.floor(Math.random() * 900000) + 100000,
-                selectedTable: @json($selectedTable),
-                existingOrderId: existingOrderId, // Store the existing order ID
                 
                 // Food items data from backend
                 allItems: @json($foodItems),
@@ -453,13 +421,7 @@
                 },
                 
                 handleDineInClick() {
-                    if (this.selectedTable) {
-                        // If table is already selected, just set order type to dine_in
-                        this.orderType = 'dine_in';
-                    } else {
-                        // Redirect to tables page for dine-in orders
-                        window.location.href = '{{ route("tables.index") }}';
-                    }
+                    this.orderType = 'dine_in';
                 },
                 
                 async processOrder() {
@@ -468,11 +430,10 @@
                     const orderData = {
                         order_type: this.orderType,
                         payment_method: this.paymentMethod,
-                        table_id: this.selectedTable ? this.selectedTable.id : null,
-                        order_id: this.existingOrderId, // Include existing order ID if present
                         items: this.orderItems.map(item => ({
                             food_item_id: item.id,
-                            quantity: item.quantity
+                            quantity: item.quantity,
+                            notes: item.notes || null
                         }))
                     };
                     
@@ -489,19 +450,9 @@
                         const result = await response.json();
                         
                         if (result.success) {
-                            const successMessage = this.existingOrderId ? 
-                                'Order updated successfully!' : 
-                                'Order placed successfully!';
-                            alert(successMessage);
+                            alert('Order placed successfully!');
                             this.orderItems = [];
                             this.orderNumber = Math.floor(Math.random() * 900000) + 100000;
-                            
-                            // If we updated an existing order, redirect back to tables
-                            if (this.existingOrderId && this.selectedTable) {
-                                setTimeout(() => {
-                                    window.location.href = '{{ route("tables.index") }}';
-                                }, 1000);
-                            }
                         } else {
                             alert('Error placing order: ' + result.message);
                         }
