@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Models\Table;
 use Illuminate\Support\Facades\Log;
 
 class TableController extends Controller
@@ -16,8 +17,29 @@ class TableController extends Controller
     public function getTables()
     {
         try {
-            // For now, return mock data. In a real app, you'd have a tables database table
-            $tables = $this->generateDefaultTables();
+            // Get all active tables from the database
+            $tables = Table::where('is_active', true)
+                ->orderBy('number')
+                ->get()
+                ->map(function ($table) {
+                    // Check if table is currently occupied
+                    $currentOrder = $table->currentOrder();
+                    
+                    return [
+                        'id' => $table->id,
+                        'number' => $table->number,
+                        'capacity' => $table->capacity,
+                        'status' => $currentOrder ? 'occupied' : $table->status,
+                        'description' => $table->description,
+                        'location' => $table->location,
+                        'current_order' => $currentOrder ? [
+                            'id' => $currentOrder->id,
+                            'order_number' => $currentOrder->order_number,
+                            'total_amount' => $currentOrder->total_amount,
+                            'created_at' => $currentOrder->created_at
+                        ] : null
+                    ];
+                });
             
             return response()->json([
                 'success' => true,
@@ -42,12 +64,37 @@ class TableController extends Controller
         
         try {
             $order = Order::findOrFail($request->order_id);
+            $table = Table::where('number', $request->table_number)->first();
+            
+            if (!$table) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Table not found'
+                ], 404);
+            }
+            
+            if (!$table->is_active) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Table is not active'
+                ], 400);
+            }
+            
+            if ($table->isOccupied()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Table is currently occupied'
+                ], 400);
+            }
             
             // Update order with table number
             $order->update([
                 'table_number' => $request->table_number,
                 'status' => 'confirmed'
             ]);
+            
+            // Update table status to occupied
+            $table->update(['status' => 'occupied']);
             
             Log::info('Table assigned successfully', [
                 'order_id' => $order->id,
@@ -81,6 +128,15 @@ class TableController extends Controller
         ]);
         
         try {
+            $table = Table::where('number', $request->table_number)->first();
+            
+            if (!$table) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Table not found'
+                ], 404);
+            }
+            
             // Find and update orders for this table
             $orders = Order::where('table_number', $request->table_number)
                 ->where('status', 'confirmed')
@@ -92,6 +148,9 @@ class TableController extends Controller
                     'completed_at' => now()
                 ]);
             }
+            
+            // Update table status to available
+            $table->update(['status' => 'available']);
             
             Log::info('Table cleared successfully', [
                 'table_number' => $request->table_number,
@@ -132,6 +191,14 @@ class TableController extends Controller
         
         try {
             $order = Order::findOrFail($request->order_id);
+            $table = Table::where('number', $request->table_number)->first();
+            
+            if (!$table) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Table not found'
+                ], 404);
+            }
             
             // Calculate tax amount (10% of subtotal)
             $taxAmount = $order->subtotal * 0.1;
@@ -149,6 +216,9 @@ class TableController extends Controller
                 'status' => 'completed',
                 'completed_at' => now()
             ]);
+            
+            // Update table status to available
+            $table->update(['status' => 'available']);
             
             Log::info('Order completed successfully', [
                 'order_id' => $order->id,
@@ -175,62 +245,5 @@ class TableController extends Controller
                 'message' => 'Error completing order: ' . $e->getMessage()
             ], 500);
         }
-    }
-    
-    private function generateDefaultTables()
-    {
-        $tables = [];
-        
-        // Get currently occupied tables
-        $occupiedTables = Order::where('status', 'confirmed')
-            ->whereNotNull('table_number')
-            ->pluck('table_number', 'id')
-            ->toArray();
-        
-        for ($i = 1; $i <= 20; $i++) {
-            $isOccupied = in_array($i, $occupiedTables);
-            
-            $tables[] = [
-                'id' => $i,
-                'number' => $i,
-                'capacity' => $this->getTableCapacity($i),
-                'status' => $isOccupied ? 'occupied' : 'available',
-                'current_order' => $isOccupied ? $this->getCurrentOrderForTable($i) : null
-            ];
-        }
-        
-        return $tables;
-    }
-    
-    private function getTableCapacity($tableNumber)
-    {
-        // Small tables (1-10): 4 seats
-        // Medium tables (11-15): 6 seats  
-        // Large tables (16-20): 8 seats
-        if ($tableNumber <= 10) {
-            return 4;
-        } elseif ($tableNumber <= 15) {
-            return 6;
-        } else {
-            return 8;
-        }
-    }
-    
-    private function getCurrentOrderForTable($tableNumber)
-    {
-        $order = Order::where('table_number', $tableNumber)
-            ->where('status', 'confirmed')
-            ->first();
-            
-        if ($order) {
-            return [
-                'id' => $order->id,
-                'order_number' => $order->order_number,
-                'total_amount' => $order->total_amount,
-                'created_at' => $order->created_at
-            ];
-        }
-        
-        return null;
     }
 }

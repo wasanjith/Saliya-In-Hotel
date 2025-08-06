@@ -18,116 +18,347 @@
     <style>
         .table-item {
             transition: all 0.3s ease;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            background: white;
+            border: 2px solid transparent;
         }
+        
         .table-item:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .table-item:active {
+            transform: translateY(-2px) scale(1.01);
+        }
+        
+        .table-item.available {
+            border-color: #10b981;
+            background: linear-gradient(145deg, #f0fdf4, #dcfce7);
+        }
+        
+        .table-item.available:hover {
+            border-color: #059669;
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+        }
+        
+        .table-item.occupied {
+            border-color: #ef4444;
+            background: linear-gradient(145deg, #fef2f2, #fee2e2);
+        }
+        
+        .table-item.occupied:hover {
+            border-color: #dc2626;
+            box-shadow: 0 20px 40px rgba(239, 68, 68, 0.2);
+        }
+        
+        .table-item.reserved {
+            border-color: #f59e0b;
+            background: linear-gradient(145deg, #fffbeb, #fef3c7);
+        }
+        
+        .table-item.reserved:hover {
+            border-color: #d97706;
+            box-shadow: 0 20px 40px rgba(245, 158, 11, 0.2);
+        }
+        
+        .table-image {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin: 0 auto;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+            transition: transform 0.3s ease;
+        }
+        
+        .table-item:hover .table-image {
+            transform: scale(1.1);
+        }
+        
+        .table-status-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .status-available {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status-occupied {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .status-reserved {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .table-info-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            margin-top: 12px;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .table-item:hover .table-info-card {
+            background: rgba(255, 255, 255, 1);
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
         }
-        .table-occupied {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
+        
+        .table-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 4px;
         }
-        .table-available {
-            background: linear-gradient(135deg, #10b981, #059669);
+        
+        .table-capacity {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 8px;
         }
-        .table-reserved {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
+        
+        .order-info {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            padding: 8px;
+            margin-top: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .legend-image {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
         }
     </style>
 </head>
 <body class="bg-gray-100" x-data="tableMapSystem()">
-    <!-- Header -->
-    <div class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-4">
-                <div class="flex items-center space-x-4">
-                    <button @click="goBack()" class="text-gray-600 hover:text-gray-900">
-                        <i class="fas fa-arrow-left text-xl"></i>
-                    </button>
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-900" x-text="orderId ? 'Select Table' : 'Table Management'"></h1>
-                        <p class="text-sm text-gray-600" x-show="orderInfo">Order #<span x-text="orderInfo?.order_number"></span> - <span x-text="orderInfo?.items_count"></span> items</p>
-                        <p class="text-sm text-gray-600" x-show="!orderId">View and manage restaurant tables</p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <div class="flex items-center space-x-2 text-sm">
-                        <div class="flex items-center space-x-1">
-                            <div class="w-4 h-4 table-available rounded"></div>
-                            <span>Available</span>
-                        </div>
-                        <div class="flex items-center space-x-1">
-                            <div class="w-4 h-4 table-occupied rounded"></div>
-                            <span>Occupied</span>
-                        </div>
-                        <div class="flex items-center space-x-1">
-                            <div class="w-4 h-4 table-reserved rounded"></div>
-                            <span>Reserved</span>
-                        </div>
-                    </div>
+    <div class="flex">
+        <!-- Left Sidebar -->
+        <div class="w-64 bg-gray-800 text-white flex flex-col fixed top-0 left-0 h-screen z-50">
+            <!-- Logo -->
+            <div class="p-4 border-b border-gray-700">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-fish text-blue-400 text-2xl"></i>
+                    <span class="text-xl font-bold">SEAFOOD</span>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Loading State -->
-    <div x-show="loading" class="flex justify-center items-center h-64">
-        <div class="text-center">
-            <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
-            <p class="text-gray-600">Loading tables...</p>
-        </div>
-    </div>
-
-    <!-- Table Map -->
-    <div x-show="!loading" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Restaurant Layout -->
-        <div class="bg-white rounded-lg shadow-lg p-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <template x-for="table in tables" :key="table.id">
-                    <div @click="selectTable(table)" 
-                         :class="getTableClass(table)"
-                         class="table-item relative p-6 rounded-lg cursor-pointer text-white text-center">
-                        
-                        <!-- Table Icon -->
-                        <div class="mb-4">
-                            <i class="fas fa-chair text-3xl"></i>
-                        </div>
-                        
-                        <!-- Table Info -->
-                        <div>
-                            <h3 class="text-lg font-bold mb-1" x-text="'Table ' + table.number"></h3>
-                            <p class="text-sm opacity-90" x-text="table.capacity + ' seats'"></p>
-                            <p class="text-xs mt-1 opacity-75" x-text="getTableStatusText(table)"></p>
-                        </div>
-                        
-                        <!-- Status Indicator -->
-                        <div class="absolute top-2 right-2">
-                            <div :class="getStatusIndicator(table)" class="w-3 h-3 rounded-full"></div>
-                        </div>
-                        
-                        <!-- Occupied Info -->
-                        <template x-if="table.status === 'occupied' && table.current_order">
-                            <div class="absolute bottom-2 left-2 right-2">
-                                <p class="text-xs opacity-75">Order #<span x-text="table.current_order.order_number"></span></p>
-                            </div>
-                        </template>
-                    </div>
-                </template>
+            
+            <!-- Navigation -->
+            <nav class="mt-6">
+                <div class="px-4 space-y-2">
+                    <a href="/pos" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                        <i class="fas fa-home mr-3"></i>
+                        <span>Home</span>
+                    </a>
+                    <a href="#" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                        <i class="fas fa-chart-bar mr-3"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                        <i class="fas fa-shopping-bag mr-3"></i>
+                        <span>Orders</span>
+                    </a>
+                    <a href="/customers" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                        <i class="fas fa-users mr-3"></i>
+                        <span>Customers</span>
+                    </a>
+                    <a href="/tables" class="flex items-center px-4 py-3 text-blue-400 bg-blue-900 rounded-lg">
+                        <i class="fas fa-chair mr-3"></i>
+                        <span>Tables</span>
+                    </a>
+                </div>
+            </nav>
+            
+            <!-- Logout -->
+            <div class="mt-auto p-4">
+                <a href="#" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                    <i class="fas fa-power-off mr-3"></i>
+                    <span>Logout</span>
+                </a>
             </div>
         </div>
         
-        <!-- Action Buttons -->
-        <div class="mt-8 flex justify-center space-x-4">
-            <button @click="goBack()" 
-                    class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Back to POS
-            </button>
-            <button x-show="selectedTable && orderId" 
-                    @click="confirmTableSelection()" 
-                    class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg">
-                <i class="fas fa-check mr-2"></i>
-                Confirm Table <span x-text="selectedTable?.number"></span>
-            </button>
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col ml-64">
+            <!-- Top Header -->
+            <header class="bg-white shadow-sm border-b">
+                <div class="flex items-center justify-between px-6 py-4">
+                    <div class="flex items-center space-x-4">
+                        <button @click="goBack()" class="text-gray-600 hover:text-gray-900">
+                            <i class="fas fa-arrow-left text-xl"></i>
+                        </button>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900" x-text="orderId ? 'Select Table' : 'Table Management'"></h1>
+                            <p class="text-sm text-gray-600" x-show="orderInfo">Order #<span x-text="orderInfo?.order_number"></span> - <span x-text="orderInfo?.items_count"></span> items</p>
+                            <p class="text-sm text-gray-600" x-show="!orderId">View and manage restaurant tables</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Icons -->
+                    <div class="flex items-center space-x-4">
+                        <!-- Legend -->
+                        <div class="flex items-center space-x-3 text-sm">
+                            <div class="legend-item">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='60' r='35' fill='%23c7f5c7' stroke='%23333' stroke-width='4'/%3E%3Cpath d='M75 85 L90 95 L125 65' stroke='%23333' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='50' y='110' width='100' height='15' rx='7' fill='%2390c695' stroke='%23333' stroke-width='3'/%3E%3Crect x='60' y='125' width='80' height='8' fill='%2390c695' stroke='%23333' stroke-width='2'/%3E%3Crect x='70' y='133' width='12' height='50' fill='%2390c695' stroke='%23333' stroke-width='3'/%3E%3Crect x='118' y='133' width='12' height='50' fill='%2390c695' stroke='%23333' stroke-width='3'/%3E%3C/svg%3E" 
+                                     alt="Available" class="legend-image">
+                                <span class="font-medium text-green-700">Available</span>
+                            </div>
+                            <div class="legend-item">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect x='50' y='80' width='100' height='15' rx='7' fill='%23ffb366' stroke='%23333' stroke-width='3'/%3E%3Crect x='60' y='95' width='80' height='8' fill='%23ffb366' stroke='%23333' stroke-width='2'/%3E%3Crect x='70' y='103' width='12' height='50' fill='%23ffb366' stroke='%23333' stroke-width='3'/%3E%3Crect x='118' y='103' width='12' height='50' fill='%23ffb366' stroke='%23333' stroke-width='3'/%3E%3Ccircle cx='85' cy='45' r='12' fill='%23ffcc99' stroke='%23333' stroke-width='2'/%3E%3Cpath d='M85 57 Q85 65 85 70' stroke='%23333' stroke-width='2' fill='none'/%3E%3Cpath d='M75 65 Q85 75 95 65' stroke='%23333' stroke-width='2' fill='none'/%3E%3Ccircle cx='100' cy='40' r='12' fill='%23ffcc99' stroke='%23333' stroke-width='2'/%3E%3Cpath d='M100 52 Q100 60 100 65' stroke='%23333' stroke-width='2' fill='none'/%3E%3Cpath d='M90 60 Q100 70 110 60' stroke='%23333' stroke-width='2' fill='none'/%3E%3Ccircle cx='115' cy='45' r='12' fill='%23ffcc99' stroke='%23333' stroke-width='2'/%3E%3Cpath d='M115 57 Q115 65 115 70' stroke='%23333' stroke-width='2' fill='none'/%3E%3Cpath d='M105 65 Q115 75 125 65' stroke='%23333' stroke-width='2' fill='none'/%3E%3C/svg%3E" 
+                                     alt="Occupied" class="legend-image">
+                                <span class="font-medium text-red-700">Occupied</span>
+                            </div>
+                            <div class="legend-item">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='50' r='20' fill='%23ffd700' stroke='%23333' stroke-width='3'/%3E%3Ctext x='100' y='58' text-anchor='middle' font-family='Arial' font-size='24' font-weight='bold' fill='%23333'%3E%24%3C/text%3E%3Crect x='70' y='70' width='60' height='12' rx='2' fill='%23ffb84d' stroke='%23333' stroke-width='2'/%3E%3Ctext x='100' y='80' text-anchor='middle' font-family='Arial' font-size='8' font-weight='bold' fill='%23333'%3ERESERVED%3C/text%3E%3Crect x='50' y='90' width='100' height='15' rx='7' fill='%23ffb84d' stroke='%23333' stroke-width='3'/%3E%3Crect x='60' y='105' width='80' height='8' fill='%23ffb84d' stroke='%23333' stroke-width='2'/%3E%3Crect x='70' y='113' width='12' height='50' fill='%23ffb84d' stroke='%23333' stroke-width='3'/%3E%3Crect x='118' y='113' width='12' height='50' fill='%23ffb84d' stroke='%23333' stroke-width='3'/%3E%3C/svg%3E" 
+                                     alt="Reserved" class="legend-image">
+                                <span class="font-medium text-orange-700">Reserved</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Header Icons -->
+                        <i class="fas fa-globe text-gray-600 text-xl"></i>
+                        <i class="fas fa-bell text-gray-600 text-xl"></i>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm font-medium">A</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Loading State -->
+            <div x-show="loading" class="flex justify-center items-center h-64">
+                <div class="text-center">
+                    <div class="relative">
+                        <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+                        <div class="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-green-500 rounded-full animate-ping mx-auto"></div>
+                    </div>
+                    <p class="text-gray-600 font-medium">Loading restaurant tables...</p>
+                    <p class="text-gray-400 text-sm mt-1">Please wait a moment</p>
+                </div>
+            </div>
+
+            <!-- Table Map -->
+            <div x-show="!loading" class="px-6 py-8">
+        <!-- Restaurant Layout -->
+        <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-xl p-8 relative overflow-hidden">
+            <!-- Decorative background pattern -->
+            <div class="absolute inset-0 opacity-5">
+                <div class="absolute top-10 left-10 w-20 h-20 bg-blue-500 rounded-full"></div>
+                <div class="absolute top-32 right-20 w-16 h-16 bg-green-500 rounded-full"></div>
+                <div class="absolute bottom-20 left-32 w-12 h-12 bg-orange-500 rounded-full"></div>
+                <div class="absolute bottom-10 right-10 w-24 h-24 bg-purple-500 rounded-full"></div>
+            </div>
+            
+            <div class="relative z-10">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Restaurant Floor Plan</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+                <template x-for="table in tables" :key="table.id">
+                    <div @click="selectTable(table)" 
+                         :class="getTableClass(table)"
+                         class="table-item relative p-6 cursor-pointer text-center">
+                        
+                        <!-- Status Badge -->
+                        <div :class="getStatusBadgeClass(table)" class="table-status-badge">
+                            <span x-text="getTableStatusText(table)"></span>
+                        </div>
+                        
+                        <!-- Table Image -->
+                        <div class="mb-4">
+                            <img :src="getTableImage(table)" :alt="getTableStatusText(table)" class="table-image">
+                        </div>
+                        
+                        <!-- Table Info Card -->
+                        <div class="table-info-card">
+                            <div class="table-number" x-text="'Table ' + table.number"></div>
+                            <div class="table-capacity">
+                                <i class="fas fa-users mr-1"></i>
+                                <span x-text="table.capacity + ' seats'"></span>
+                            </div>
+                            
+                            <!-- Occupied Info -->
+                            <template x-if="table.status === 'occupied' && table.current_order">
+                                <div class="order-info">
+                                    <div class="text-xs font-medium text-gray-700 mb-1">Current Order</div>
+                                    <div class="text-xs text-gray-600">
+                                        #<span x-text="table.current_order.order_number"></span>
+                                    </div>
+                                    <div class="text-xs text-gray-600">
+                                        Rs. <span x-text="Math.round(table.current_order.total_amount || 0)"></span>
+                                    </div>
+                                </div>
+                            </template>
+                            
+                            <!-- Available Info -->
+                            <template x-if="table.status === 'available'">
+                                <div class="text-xs text-green-600 font-medium mt-2">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Ready for guests
+                                </div>
+                            </template>
+                            
+                            <!-- Reserved Info -->
+                            <template x-if="table.status === 'reserved'">
+                                <div class="text-xs text-orange-600 font-medium mt-2">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    Reserved for guest
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+                </div>
+            </div>
+        </div>
+        
+                <!-- Action Buttons -->
+                <div class="mt-8 flex justify-center space-x-4">
+                    <button @click="goBack()" 
+                            class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Back to POS
+                    </button>
+                    <button x-show="selectedTable && orderId" 
+                            @click="confirmTableSelection()" 
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg">
+                        <i class="fas fa-check mr-2"></i>
+                        Confirm Table <span x-text="selectedTable?.number"></span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -488,19 +719,53 @@
                 },
                 
                 getTableClass(table) {
-                    const baseClass = 'table-item relative p-6 rounded-lg cursor-pointer text-white text-center';
+                    let classes = 'table-item relative p-6 cursor-pointer text-center';
                     
-                    if (this.selectedTable && this.selectedTable.id === table.id) {
-                        return baseClass + ' ring-4 ring-white ring-opacity-50';
-                    }
-                    
+                    // Add status-specific classes
                     switch (table.status) {
                         case 'occupied':
-                            return baseClass + ' table-occupied cursor-not-allowed';
+                            classes += ' occupied';
+                            if (table.status === 'occupied') {
+                                classes += ' cursor-not-allowed';
+                            }
+                            break;
                         case 'reserved':
-                            return baseClass + ' table-reserved';
+                            classes += ' reserved';
+                            break;
                         default:
-                            return baseClass + ' table-available hover:opacity-90';
+                            classes += ' available';
+                    }
+                    
+                    // Add selection ring
+                    if (this.selectedTable && this.selectedTable.id === table.id) {
+                        classes += ' ring-4 ring-blue-400 ring-opacity-50';
+                    }
+                    
+                    return classes;
+                },
+                
+                getTableImage(table) {
+                    // SVG data URLs for each status with beautiful illustrations
+                    switch (table.status) {
+                        case 'available':
+                            return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='60' r='35' fill='%23c7f5c7' stroke='%23333' stroke-width='4'/%3E%3Cpath d='M75 85 L90 95 L125 65' stroke='%23333' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='50' y='110' width='100' height='15' rx='7' fill='%2390c695' stroke='%23333' stroke-width='3'/%3E%3Crect x='60' y='125' width='80' height='8' fill='%2390c695' stroke='%23333' stroke-width='2'/%3E%3Crect x='70' y='133' width='12' height='50' fill='%2390c695' stroke='%23333' stroke-width='3'/%3E%3Crect x='118' y='133' width='12' height='50' fill='%2390c695' stroke='%23333' stroke-width='3'/%3E%3C/svg%3E";
+                        case 'occupied':
+                            return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect x='50' y='80' width='100' height='15' rx='7' fill='%23ffb366' stroke='%23333' stroke-width='3'/%3E%3Crect x='60' y='95' width='80' height='8' fill='%23ffb366' stroke='%23333' stroke-width='2'/%3E%3Crect x='70' y='103' width='12' height='50' fill='%23ffb366' stroke='%23333' stroke-width='3'/%3E%3Crect x='118' y='103' width='12' height='50' fill='%23ffb366' stroke='%23333' stroke-width='3'/%3E%3Ccircle cx='85' cy='45' r='12' fill='%23ffcc99' stroke='%23333' stroke-width='2'/%3E%3Cpath d='M85 57 Q85 65 85 70' stroke='%23333' stroke-width='2' fill='none'/%3E%3Cpath d='M75 65 Q85 75 95 65' stroke='%23333' stroke-width='2' fill='none'/%3E%3Ccircle cx='100' cy='40' r='12' fill='%23ffcc99' stroke='%23333' stroke-width='2'/%3E%3Cpath d='M100 52 Q100 60 100 65' stroke='%23333' stroke-width='2' fill='none'/%3E%3Cpath d='M90 60 Q100 70 110 60' stroke='%23333' stroke-width='2' fill='none'/%3E%3Ccircle cx='115' cy='45' r='12' fill='%23ffcc99' stroke='%23333' stroke-width='2'/%3E%3Cpath d='M115 57 Q115 65 115 70' stroke='%23333' stroke-width='2' fill='none'/%3E%3Cpath d='M105 65 Q115 75 125 65' stroke='%23333' stroke-width='2' fill='none'/%3E%3C/svg%3E";
+                        case 'reserved':
+                            return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='50' r='20' fill='%23ffd700' stroke='%23333' stroke-width='3'/%3E%3Ctext x='100' y='58' text-anchor='middle' font-family='Arial' font-size='24' font-weight='bold' fill='%23333'%3E%24%3C/text%3E%3Crect x='70' y='70' width='60' height='12' rx='2' fill='%23ffb84d' stroke='%23333' stroke-width='2'/%3E%3Ctext x='100' y='80' text-anchor='middle' font-family='Arial' font-size='8' font-weight='bold' fill='%23333'%3ERESERVED%3C/text%3E%3Crect x='50' y='90' width='100' height='15' rx='7' fill='%23ffb84d' stroke='%23333' stroke-width='3'/%3E%3Crect x='60' y='105' width='80' height='8' fill='%23ffb84d' stroke='%23333' stroke-width='2'/%3E%3Crect x='70' y='113' width='12' height='50' fill='%23ffb84d' stroke='%23333' stroke-width='3'/%3E%3Crect x='118' y='113' width='12' height='50' fill='%23ffb84d' stroke='%23333' stroke-width='3'/%3E%3C/svg%3E";
+                        default:
+                            return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='60' r='35' fill='%23c7f5c7' stroke='%23333' stroke-width='4'/%3E%3Cpath d='M75 85 L90 95 L125 65' stroke='%23333' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='50' y='110' width='100' height='15' rx='7' fill='%2390c695' stroke='%23333' stroke-width='3'/%3E%3Crect x='60' y='125' width='80' height='8' fill='%2390c695' stroke='%23333' stroke-width='2'/%3E%3Crect x='70' y='133' width='12' height='50' fill='%2390c695' stroke='%23333' stroke-width='3'/%3E%3Crect x='118' y='133' width='12' height='50' fill='%2390c695' stroke='%23333' stroke-width='3'/%3E%3C/svg%3E";
+                    }
+                },
+                
+                getStatusBadgeClass(table) {
+                    switch (table.status) {
+                        case 'occupied':
+                            return 'status-occupied';
+                        case 'reserved':
+                            return 'status-reserved';
+                        default:
+                            return 'status-available';
                     }
                 },
                 
@@ -515,16 +780,7 @@
                     }
                 },
                 
-                getStatusIndicator(table) {
-                    switch (table.status) {
-                        case 'occupied':
-                            return 'bg-red-400';
-                        case 'reserved':
-                            return 'bg-yellow-400';
-                        default:
-                            return 'bg-green-400';
-                    }
-                },
+
                 
                 async confirmTableSelection() {
                     this.showConfirmModal = true;

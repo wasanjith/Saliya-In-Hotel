@@ -20,10 +20,11 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
-        // Seed categories and food items
+        // Seed categories, food items, and tables
         $this->call([
             CategorySeeder::class,
             FoodItemSeeder::class,
+            TableSeeder::class,
         ]);
     }
 }

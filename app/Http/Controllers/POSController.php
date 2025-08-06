@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Category;
+use App\Models\Customer;
 use App\Models\FoodItem;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -59,20 +60,33 @@ class POSController extends Controller
             'items.*.food_item_id' => 'required|exists:food_items,id',
             'items.*.quantity' => 'required|integer|min:1',
             'payment_method' => 'required|in:cash,card,gift,other',
-
-
+            'customer_name' => 'nullable|string|max:255',
+            'customer_phone' => 'nullable|string|max:20',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'customer_paid' => 'nullable|numeric|min:0',
+            'balance_returned' => 'nullable|numeric|min:0',
+            'total_amount' => 'nullable|numeric|min:0',
         ]);
 
         try {
             DB::beginTransaction();
 
+            // Handle customer creation/lookup
+            $customer = null;
+            if ($request->customer_phone) {
+                $customer = Customer::findOrCreateByPhone($request->customer_phone, $request->customer_name);
+            }
+
             // Create a new order
             $order = Order::create([
                 'order_type' => $request->order_type,
                 'payment_method' => $request->payment_method,
+                'customer_id' => $customer?->id,
+                'customer_name' => $request->customer_name,
+                'customer_phone' => $request->customer_phone,
                 'subtotal' => 0,
                 'tax_amount' => 0,
-                'discount_amount' => 0,
+                'discount_amount' => $request->discount_amount ?? 0,
                 'total_amount' => 0,
                 'status' => 'pending',
             ]);
@@ -129,18 +143,26 @@ class POSController extends Controller
             ]);
 
             // Calculate tax and total (you can adjust tax rate as needed)
-            $taxRate = 0.14; // 14% tax
+            $taxRate = 0.10; // 10% tax for takeaway
             $taxAmount = round($subtotal * $taxRate, 2);
-            $discountRate = 0.12; // 12% discount
-            $discountAmount = round($subtotal * $discountRate, 2);
-            $totalAmount = $subtotal + $taxAmount - $discountAmount;
+            $discountAmount = $request->discount_amount ?? 0;
+            $totalAmount = $request->total_amount ?? ($subtotal + $taxAmount - $discountAmount);
 
             $order->update([
                 'subtotal' => $subtotal,
                 'tax_amount' => $taxAmount,
                 'discount_amount' => $discountAmount,
                 'total_amount' => $totalAmount,
+                'customer_paid' => $request->customer_paid ?? $totalAmount,
+                'balance_returned' => $request->balance_returned ?? 0,
+                'status' => $request->customer_paid ? 'completed' : 'pending',
+                'completed_at' => $request->customer_paid ? now() : null,
             ]);
+
+            // Increment customer orders_qty if order is completed and customer exists
+            if ($request->customer_paid && $customer) {
+                $customer->incrementOrdersQty();
+            }
 
             DB::commit();
 

@@ -62,7 +62,7 @@
                         <i class="fas fa-shopping-bag mr-3"></i>
                         <span>Orders</span>
                     </a>
-                    <a href="#" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                    <a href="/customers" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
                         <i class="fas fa-users mr-3"></i>
                         <span>Customers</span>
                     </a>
@@ -326,6 +326,181 @@
         </div>
     </div>
 
+    <!-- Takeaway Payment Modal -->
+    <div x-show="showTakeawayModal" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+        
+        <div x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 transform scale-95"
+             x-transition:enter-end="opacity-100 transform scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 transform scale-100"
+             x-transition:leave-end="opacity-0 transform scale-95"
+             class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 my-8 max-h-screen overflow-y-auto">
+            
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-gray-900">Takeaway Order Payment</h3>
+                    <button @click="showTakeawayModal = false" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Order Summary -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-3">Order Summary</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Order Number:</span>
+                            <span class="font-medium" x-text="orderNumber"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Order Type:</span>
+                            <span class="font-medium capitalize">Takeaway</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Items Count:</span>
+                            <span class="font-medium" x-text="orderItems.length + ' items'"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="bg-white border rounded-lg p-4 mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-3">Items Ordered</h4>
+                    <div class="space-y-2 max-h-40 overflow-y-auto">
+                        <template x-for="item in orderItems" :key="item.id">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <div class="flex-1">
+                                    <span class="font-medium" x-text="item.name"></span>
+                                    <span class="text-gray-500 text-sm ml-2">x<span x-text="item.quantity"></span></span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-medium">Rs. <span x-text="Math.round(item.price * item.quantity)"></span></div>
+                                    <div class="text-sm text-gray-500">@ Rs. <span x-text="Math.round(item.price)"></span></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Customer Information -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-3">Customer Information</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                            <input type="text" x-model="takeawayCustomerInfo.name" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Enter customer name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                            <input type="tel" x-model="takeawayCustomerInfo.phone" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Enter phone number">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Details -->
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-3">Payment Details</h4>
+                    
+                    <!-- Payment Method -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                        <div class="flex space-x-2">
+                            <button @click="takeawayPaymentInfo.method = 'cash'" 
+                                    :class="takeawayPaymentInfo.method === 'cash' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
+                                    class="px-4 py-2 rounded-lg text-sm font-medium">
+                                Cash
+                            </button>
+                            <button @click="takeawayPaymentInfo.method = 'card'" 
+                                    :class="takeawayPaymentInfo.method === 'card' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
+                                    class="px-4 py-2 rounded-lg text-sm font-medium">
+                                Card
+                            </button>
+                            <button @click="takeawayPaymentInfo.method = 'gift'" 
+                                    :class="takeawayPaymentInfo.method === 'gift' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
+                                    class="px-4 py-2 rounded-lg text-sm font-medium">
+                                Gift Card
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Amount Breakdown -->
+                    <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Subtotal:</span>
+                            <span class="font-medium">Rs. <span x-text="Math.round(takeawayPaymentInfo.subtotal)"></span></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Tax (10%):</span>
+                            <span class="font-medium">Rs. <span x-text="Math.round(takeawayPaymentInfo.tax)"></span></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Discount:</span>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" x-model="takeawayPaymentInfo.discount" @input="calculateTakeawayTotals()"
+                                       class="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-right"
+                                       min="0" step="0.01">
+                                <span class="text-sm">Rs.</span>
+                            </div>
+                        </div>
+                        <hr class="border-gray-300">
+                        <div class="flex justify-between text-lg font-bold">
+                            <span>Total Amount:</span>
+                            <span class="text-blue-600">Rs. <span x-text="Math.round(takeawayPaymentInfo.totalAmount)"></span></span>
+                        </div>
+                    </div>
+
+                    <!-- Payment Input -->
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Amount Paid by Customer</label>
+                        <input type="number" x-model="takeawayPaymentInfo.paidAmount" @input="calculateTakeawayBalance()"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-medium"
+                               placeholder="Enter amount paid" step="0.01" min="0">
+                    </div>
+
+                    <!-- Balance Display -->
+                    <div class="mt-4 p-3 rounded-lg" :class="takeawayPaymentInfo.balance >= 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'">
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium" :class="takeawayPaymentInfo.balance >= 0 ? 'text-green-700' : 'text-red-700'">
+                                <span x-show="takeawayPaymentInfo.balance >= 0">Balance to Return:</span>
+                                <span x-show="takeawayPaymentInfo.balance < 0">Amount Due:</span>
+                            </span>
+                            <span class="text-lg font-bold" :class="takeawayPaymentInfo.balance >= 0 ? 'text-green-600' : 'text-red-600'">
+                                Rs. <span x-text="Math.round(Math.abs(takeawayPaymentInfo.balance))"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-3">
+                    <button @click="showTakeawayModal = false" 
+                            class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 px-4 rounded-lg font-medium">
+                        Cancel
+                    </button>
+                    <button @click="processTakeawayOrder()" 
+                            :disabled="!takeawayCustomerInfo.name || takeawayPaymentInfo.paidAmount <= 0"
+                            :class="(!takeawayCustomerInfo.name || takeawayPaymentInfo.paidAmount <= 0) ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'"
+                            class="flex-1 text-white py-3 px-4 rounded-lg font-medium">
+                        <i class="fas fa-check mr-2"></i>
+                        Complete Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function posSystem() {
             return {
@@ -336,6 +511,20 @@
                 favoriteItems: [],
                 showFavorites: false,
                 orderNumber: Math.floor(Math.random() * 900000) + 100000,
+                showTakeawayModal: false,
+                takeawayCustomerInfo: {
+                    name: '',
+                    phone: ''
+                },
+                takeawayPaymentInfo: {
+                    method: 'cash',
+                    discount: 0,
+                    paidAmount: 0,
+                    totalAmount: 0,
+                    balance: 0,
+                    subtotal: 0,
+                    tax: 0
+                },
                 
                 // Food items data from backend
                 allItems: @json($foodItems),
@@ -473,6 +662,13 @@
                 async processOrder() {
                     if (this.orderItems.length === 0) return;
                     
+                    // For takeaway orders, show payment modal
+                    if (this.orderType === 'takeaway') {
+                        this.showTakeawayPaymentModal();
+                        return;
+                    }
+                    
+                    // For delivery orders, proceed with normal flow
                     const orderData = {
                         order_type: this.orderType,
                         payment_method: this.paymentMethod,
@@ -505,6 +701,90 @@
                     } catch (error) {
                         console.error('Error:', error);
                         alert('Error placing order. Please try again.');
+                    }
+                },
+                
+                showTakeawayPaymentModal() {
+                    // Calculate totals
+                    this.calculateTakeawayTotals();
+                    this.showTakeawayModal = true;
+                },
+                
+                calculateTakeawayTotals() {
+                    const subtotal = this.orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                    const tax = subtotal * 0.1;
+                    const discount = parseFloat(this.takeawayPaymentInfo.discount || 0);
+                    
+                    this.takeawayPaymentInfo.subtotal = subtotal;
+                    this.takeawayPaymentInfo.tax = tax;
+                    this.takeawayPaymentInfo.totalAmount = subtotal + tax - discount;
+                    this.takeawayPaymentInfo.paidAmount = this.takeawayPaymentInfo.totalAmount;
+                    this.calculateTakeawayBalance();
+                },
+                
+                calculateTakeawayBalance() {
+                    this.takeawayPaymentInfo.balance = parseFloat(this.takeawayPaymentInfo.paidAmount || 0) - this.takeawayPaymentInfo.totalAmount;
+                },
+                
+                async processTakeawayOrder() {
+                    if (!this.takeawayCustomerInfo.name || this.takeawayPaymentInfo.paidAmount <= 0) {
+                        alert('Please fill in customer name and payment amount.');
+                        return;
+                    }
+                    
+                    const orderData = {
+                        order_type: 'takeaway',
+                        payment_method: this.takeawayPaymentInfo.method,
+                        customer_name: this.takeawayCustomerInfo.name,
+                        customer_phone: this.takeawayCustomerInfo.phone,
+                        discount_amount: parseFloat(this.takeawayPaymentInfo.discount || 0),
+                        customer_paid: parseFloat(this.takeawayPaymentInfo.paidAmount),
+                        balance_returned: Math.max(0, this.takeawayPaymentInfo.balance),
+                        total_amount: this.takeawayPaymentInfo.totalAmount,
+                        items: this.orderItems.map(item => ({
+                            food_item_id: item.id,
+                            quantity: item.quantity,
+                            notes: item.notes || null
+                        }))
+                    };
+                    
+                    try {
+                        const response = await fetch('/pos/order', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify(orderData)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            alert('Takeaway order completed successfully!');
+                            this.showTakeawayModal = false;
+                            
+                            // Reset form
+                            this.takeawayCustomerInfo = { name: '', phone: '' };
+                            this.takeawayPaymentInfo = { 
+                                method: 'cash', 
+                                discount: 0, 
+                                paidAmount: 0, 
+                                totalAmount: 0, 
+                                balance: 0,
+                                subtotal: 0,
+                                tax: 0
+                            };
+                            
+                            // Clear order items
+                            this.orderItems = [];
+                            this.orderNumber = Math.floor(Math.random() * 900000) + 100000;
+                        } else {
+                            alert('Error completing order: ' + result.message);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error completing order. Please try again.');
                     }
                 }
             }

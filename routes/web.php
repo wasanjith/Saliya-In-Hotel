@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\POSController;
+use App\Http\Controllers\CustomerController;
 
 Route::get('/', function () {
     return redirect('/pos');
@@ -20,6 +21,7 @@ Route::post('/api/assign-table', [App\Http\Controllers\TableController::class, '
 Route::post('/api/clear-table', [App\Http\Controllers\TableController::class, 'clearTable'])->name('api.clear-table');
 Route::post('/api/close-order', [App\Http\Controllers\TableController::class, 'closeOrder'])->name('api.close-order');
 
-
-
-
+// Customer Management Routes
+Route::resource('customers', CustomerController::class);
+Route::get('/customers/search', [CustomerController::class, 'search'])->name('customers.search');
+Route::get('/customers/statistics', [CustomerController::class, 'statistics'])->name('customers.statistics');
