@@ -35,9 +35,9 @@ class OrderItem extends Model
     }
 
     /**
-     * Add a food item to the items array
+     * Add a food item to the items array with portion support
      */
-    public function addFoodItem(int $foodItemId, string $itemName, int $quantity, float $unitPrice, ?string $notes = null): void
+    public function addFoodItem(int $foodItemId, string $itemName, int $quantity, float $unitPrice, string $portion = 'full', ?string $notes = null): void
     {
         $items = $this->items ?? [];
         
@@ -49,11 +49,29 @@ class OrderItem extends Model
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'total_price' => $totalPrice,
+            'portion' => $portion,
             'notes' => $notes,
         ];
         
         $this->items = $items;
         $this->calculateTotalAmount();
+    }
+
+    /**
+     * Add a food item with automatic price calculation based on portion and order type
+     */
+    public function addFoodItemWithPortion(int $foodItemId, int $quantity, string $portion = 'full', string $orderType = 'dine_in', ?string $notes = null): void
+    {
+        $foodItem = FoodItem::find($foodItemId);
+        
+        if (!$foodItem) {
+            throw new \Exception("Food item not found with ID: {$foodItemId}");
+        }
+
+        $unitPrice = $foodItem->getPrice($portion, $orderType);
+        $itemName = $foodItem->name . ' (' . $foodItem->getPortionName($portion) . ')';
+        
+        $this->addFoodItem($foodItemId, $itemName, $quantity, $unitPrice, $portion, $notes);
     }
 
     /**
@@ -79,5 +97,23 @@ class OrderItem extends Model
     public function getItemsCount(): int
     {
         return count($this->items ?? []);
+    }
+
+    /**
+     * Get items grouped by portion
+     */
+    public function getItemsByPortion(): array
+    {
+        $grouped = [];
+        
+        foreach ($this->items ?? [] as $item) {
+            $portion = $item['portion'] ?? 'full';
+            if (!isset($grouped[$portion])) {
+                $grouped[$portion] = [];
+            }
+            $grouped[$portion][] = $item;
+        }
+        
+        return $grouped;
     }
 }

@@ -33,40 +33,65 @@
         .order-item:hover {
             background-color: #f3f4f6;
         }
+        .sidebar-gradient {
+            background: linear-gradient(135deg, #008200 0%, #006600 50%, #004400 100%);
+        }
+        
+        /* Customer suggestions dropdown styles */
+        .customer-suggestions {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+        
+        .customer-suggestion-item {
+            transition: all 0.2s ease;
+        }
+        
+        .customer-suggestion-item:hover {
+            background-color: #f3f4f6;
+            transform: translateX(2px);
+        }
+        
+        .customer-suggestion-item:active {
+            background-color: #e5e7eb;
+        }
     </style>
 </head>
 <body class="bg-gray-100" x-data="posSystem()">
     <div class="flex">
         <!-- Left Sidebar -->
-        <div class="w-64 bg-gray-800 text-white flex flex-col fixed top-0 left-0 h-screen z-50">
+        <div class="w-64 sidebar-gradient text-white flex flex-col fixed top-0 left-0 h-screen z-50">
             <!-- Logo -->
-            <div class="p-4 border-b border-gray-700">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-fish text-blue-400 text-2xl"></i>
-                    <span class="text-xl font-bold">SEAFOOD</span>
+            <div class="p-4 border-b border-green-700">
+                <div class="flex items-center space-x-3">
+                    <img src="{{ asset('images/logoo.saliya.png') }}" alt="Saliya Inn Logo" class="w-10 h-10 rounded-lg object-cover">
+                    <span class="text-xl font-bold">Saliya Inn</span>
                 </div>
             </div>
             
             <!-- Navigation -->
             <nav class="mt-6">
                 <div class="px-4 space-y-2">
-                    <a href="#" class="flex items-center px-4 py-3 text-blue-400 bg-blue-900 rounded-lg">
+                    <a href="#" class="flex items-center px-4 py-3 text-green-200 bg-green-800 rounded-lg">
                         <i class="fas fa-home mr-3"></i>
                         <span>Home</span>
                     </a>
-                    <a href="/admin" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                    <a href="/admin" class="flex items-center px-4 py-3 text-green-200 hover:bg-green-700 rounded-lg">
                         <i class="fas fa-chart-bar mr-3"></i>
                         <span>Dashboard</span>
                     </a>
-                    <a href="#" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                    <a href="/orders" class="flex items-center px-4 py-3 text-green-200 hover:bg-green-700 rounded-lg">
                         <i class="fas fa-shopping-bag mr-3"></i>
                         <span>Orders</span>
                     </a>
-                    <a href="/customers" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                    <a href="/customers" class="flex items-center px-4 py-3 text-green-200 hover:bg-green-700 rounded-lg">
                         <i class="fas fa-users mr-3"></i>
                         <span>Customers</span>
                     </a>
-                    <a href="/tables" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                    <a href="/tables" class="flex items-center px-4 py-3 text-green-200 hover:bg-green-700 rounded-lg">
                         <i class="fas fa-chair mr-3"></i>
                         <span>Tables</span>
                     </a>
@@ -78,7 +103,7 @@
             <div class="mt-auto p-4">
                 <form method="POST" action="{{ route('logout') }}" class="w-full">
                     @csrf
-                    <button type="submit" class="w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                    <button type="submit" class="w-full flex items-center px-4 py-3 text-green-200 hover:bg-green-700 rounded-lg">
                         <i class="fas fa-power-off mr-3"></i>
                         <span>Logout</span>
                     </button>
@@ -87,32 +112,30 @@
         </div>
         
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col ml-64">
+        <div class="flex-1 flex flex-col ml-64 h-screen">
             <!-- Top Header -->
-            <header class="bg-white shadow-sm border-b">
+            <header class="bg-white shadow-sm border-b flex-shrink-0">
                 <div class="flex items-center justify-end px-6 py-4">
-                    <!-- Right Icons -->
-                    <div class="flex items-center space-x-4">
-                        <i class="fas fa-globe text-gray-600 text-xl"></i>
-                        <i class="fas fa-bell text-gray-600 text-xl"></i>
+                    <!-- User Profile -->
+                    <div class="flex items-center space-x-3">
                         <div class="flex items-center space-x-2">
-                            <img src="https://via.placeholder.com/32x32" alt="Profile" class="w-8 h-8 rounded-full">
-                            <span class="text-gray-700">Hello, {{ Auth::user()->name }}</span>
-                            <form method="POST" action="{{ route('logout') }}" class="inline">
-                                @csrf
-                                <button type="submit" class="text-gray-600 hover:text-gray-800 ml-2">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                </button>
-                            </form>
+                            <i class="fas fa-user-circle text-gray-600 text-2xl"></i>
+                            <span class="text-gray-700 font-medium">Hello, {{ Auth::user()->name }}</span>
                         </div>
+                        <form method="POST" action="{{ route('logout') }}" class="inline">
+                            @csrf
+                            <button type="submit" class="text-gray-600 hover:text-gray-800 ml-2">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </form>
                     </div>
                 </div>
             </header>
             
             <!-- Main Content Area -->
-            <div class="flex-1 flex">
+            <div class="flex-1 flex overflow-hidden">
                 <!-- Left Content - Menu -->
-                <div class="flex-1 p-6 overflow-y-auto">
+                <div class="flex-1 p-4 overflow-y-auto">
                     <!-- Categories -->
                     <div class="mb-6">
                         <h3 class="text-lg font-semibold mb-4">Choose Category</h3>
@@ -172,9 +195,25 @@
                                     <div class="p-3">
                                         <h4 class="font-medium text-gray-800 mb-1" x-text="item.name"></h4>
                                         <p class="text-sm text-gray-600 mb-2" x-text="item.description"></p>
+                                        
+                                        <!-- Portion Information -->
+                                        <div class="mb-2">
+                                            <div class="flex justify-between items-center text-sm">
+                                                <span class="text-gray-600">Full:</span>
+                                                <span class="font-medium text-blue-600" x-text="'Rs. ' + Math.round(orderType === 'takeaway' ? (item.full_portion_takeaway_price || item.takeaway_price) : (item.full_portion_dine_in_price || item.dine_in_price))"></span>
+                                            </div>
+                                            <div x-show="item.has_half_portion" class="flex justify-between items-center text-sm">
+                                                <span class="text-gray-600">Half:</span>
+                                                <span class="font-medium text-green-600" x-text="'Rs. ' + Math.round(orderType === 'takeaway' ? item.half_portion_takeaway_price : item.half_portion_dine_in_price)"></span>
+                                            </div>
+                                        </div>
+                                        
                                         <div class="flex justify-between items-center">
-                                                                                         <span class="text-lg font-bold text-blue-600" x-text="'Rs. ' + Math.round(orderType === 'takeaway' ? item.takeaway_price : item.dine_in_price)"></span>
-                                            <button @click.stop="toggleFavorite(item)" 
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-lg font-bold text-blue-600" x-text="'Rs. ' + Math.round(orderType === 'takeaway' ? (item.full_portion_takeaway_price || item.takeaway_price) : (item.full_portion_dine_in_price || item.dine_in_price))"></span>
+                                                <span x-show="item.has_half_portion" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Half Available</span>
+                                            </div>
+                                            <button @click.stop="toggleFavorite(item.id)" 
                                                     :class="isFavorite(item.id) ? 'text-yellow-500' : 'text-gray-400'"
                                                     class="hover:text-yellow-500">
                                                 <i class="fas fa-star"></i>
@@ -188,48 +227,90 @@
                 </div>
                 
                 <!-- Right Sidebar - Order -->
-                <div class="w-96 bg-white border-l border-gray-200 flex flex-col">
-                    <!-- Order Header -->
-                    <div class="p-4 border-b border-gray-200">
+                <div class="w-96 bg-white border-l border-gray-200 flex flex-col h-full">
+                    <!-- 1. Top Order Item Header -->
+                    <div class="p-3 border-b border-gray-200 bg-gray-50 flex-shrink-0">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h3 class="text-lg font-semibold">Order list</h3>
+                                <h3 class="text-lg font-semibold text-gray-800">Order Items</h3>
                             </div>
-                            <div class="text-sm text-gray-500">
-                                Transaction #<span x-text="orderNumber"></span>
-                            </div>
-                            <i class="fas fa-ellipsis-v text-gray-400"></i>
+                            <i class="fas fa-shopping-cart text-gray-400"></i>
                         </div>
                     </div>
                     
-                    <!-- Order Type -->
-                    <div class="p-4 border-b border-gray-200">
+                    <!-- 2. Invoice Number -->
+                    <div class="p-3 border-b border-gray-200 flex-shrink-0">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-600">Invoice Number:</span>
+                            <span class="text-sm font-bold text-blue-600">#<span x-text="orderNumber"></span></span>
+                        </div>
+                    </div>
+                    
+                    <!-- 3. Dine In and Take Away Buttons -->
+                    <div class="p-3 border-b border-gray-200 flex-shrink-0">
                         <div class="flex space-x-2">
                             <button @click="handleDineInClick()" 
                                     :class="orderType === 'dine_in' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
-                                    class="flex-1 py-2 px-3 rounded-lg text-sm font-medium">
+                                    class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="fas fa-utensils mr-2"></i>
                                 Dine In
                             </button>
                             <button @click="orderType = 'takeaway'" 
                                     :class="orderType === 'takeaway' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
-                                    class="flex-1 py-2 px-3 rounded-lg text-sm font-medium">
+                                    class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="fas fa-shopping-bag mr-2"></i>
                                 Takeaway
                             </button>
                         </div>
                     </div>
                     
-                    <!-- Order Items -->
-                    <div class="flex-1 overflow-y-auto p-4">
+                    <!-- 4. Order Items -->
+                    <div class="flex-1 overflow-y-auto p-3 min-h-0">
                         <template x-if="orderItems.length === 0">
                             <div class="text-center text-gray-500 py-8">
-                                <i class="fas fa-shopping-cart text-4xl mb-4"></i>
-                                <p>No items in order</p>
+                                <i class="fas fa-shopping-cart text-4xl mb-4 text-gray-300"></i>
+                                <p class="text-gray-400">No items in order</p>
+                                <p class="text-sm text-gray-300 mt-2">Add items from the menu</p>
                             </div>
                         </template>
                         
-                        <!-- Compact Order Summary - Only show when items exist -->
+                        <!-- Order Items List -->
+                        <template x-for="(item, index) in orderItems" :key="index">
+                            <div class="order-item bg-white rounded-lg p-3 mb-3 border border-gray-200 shadow-sm">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-utensils text-gray-400"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-medium text-gray-800" x-text="item.name"></h4>
+                                        <p class="text-sm text-gray-600" x-text="'Rs. ' + Math.round(item.price)"></p>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button @click="decreaseQuantity(index)" 
+                                                class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
+                                            <i class="fas fa-minus text-xs"></i>
+                                        </button>
+                                        <span class="w-8 text-center font-medium" x-text="item.quantity"></span>
+                                        <button @click="increaseQuantity(index)" 
+                                                class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
+                                            <i class="fas fa-plus text-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center mt-2">
+                                    <div class="flex space-x-2">
+                                        <button @click="applyDiscount(index)" class="text-xs text-blue-600 hover:underline">Discount</button>
+                                        <button @click="removeItem(index)" class="text-xs text-red-600 hover:underline">Remove</button>
+                                    </div>
+                                    <span class="font-medium text-gray-800" x-text="'Rs. ' + Math.round(item.price * item.quantity)"></span>
+                                </div>
+                            </div>
+                        </template>
+                        
+                        <!-- Order Summary - Only show when items exist -->
                         <template x-if="orderItems.length > 0">
-                            <div class="mb-4 p-3 bg-gray-50 rounded-lg border">
+                            <div class="mt-4 p-3 bg-gray-50 rounded-lg border">
+                                <h4 class="font-semibold text-gray-800 mb-2">Order Summary</h4>
                                 <div class="space-y-1 text-sm">
                                     <div class="flex justify-between">
                                         <span class="text-gray-600">Sub total:</span>
@@ -250,73 +331,48 @@
                                 </div>
                             </div>
                         </template>
-                        
-                        <template x-for="(item, index) in orderItems" :key="index">
-                            <div class="order-item bg-gray-50 rounded-lg p-3 mb-3">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                                        <i class="fas fa-utensils text-gray-400"></i>
-                                    </div>
-                                    <div class="flex-1">
-                                        <h4 class="font-medium" x-text="item.name"></h4>
-                                        <p class="text-sm text-gray-600" x-text="'Rs. ' + Math.round(item.price)"></p>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <button @click="decreaseQuantity(index)" 
-                                                class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300">
-                                            <i class="fas fa-minus text-xs"></i>
-                                        </button>
-                                        <span class="w-8 text-center font-medium" x-text="item.quantity"></span>
-                                        <button @click="increaseQuantity(index)" 
-                                                class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300">
-                                            <i class="fas fa-plus text-xs"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="flex justify-between items-center mt-2">
-                                    <div class="flex space-x-2">
-                                        <button @click="applyDiscount(index)" class="text-xs text-blue-600 hover:underline">Discount</button>
-                                        <button @click="removeItem(index)" class="text-xs text-red-600 hover:underline">Remove</button>
-                                    </div>
-                                    <span class="font-medium" x-text="'Rs. ' + Math.round(item.price * item.quantity)"></span>
-                                </div>
-                            </div>
-                        </template>
                     </div>
                     
-                    <!-- Payment Section -->
-                    <div class="p-4 border-t border-gray-200">
-                        <!-- Payment Methods -->
-                        <div class="mb-4">
-                            <div class="flex space-x-2">
-                                <button @click="paymentMethod = 'cash'" 
-                                        :class="paymentMethod === 'cash' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'"
-                                        class="flex-1 py-2 px-3 rounded-lg text-sm font-medium">
-                                    Cash
-                                </button>
-                                <button @click="paymentMethod = 'card'" 
-                                        :class="paymentMethod === 'card' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'"
-                                        class="flex-1 py-2 px-3 rounded-lg text-sm font-medium">
-                                    Card
-                                </button>
-                                <button @click="paymentMethod = 'gift'" 
-                                        :class="paymentMethod === 'gift' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'"
-                                        class="flex-1 py-2 px-3 rounded-lg text-sm font-medium">
-                                    Gift
-                                </button>
-                                <button @click="paymentMethod = 'other'" 
-                                        :class="paymentMethod === 'other' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'"
-                                        class="flex-1 py-2 px-3 rounded-lg text-sm font-medium">
-                                    Other
-                                </button>
-                            </div>
+                    <!-- 5. Payment Methods -->
+                    <div class="p-3 border-t border-gray-200 flex-shrink-0">
+                        <h4 class="font-semibold text-gray-800 mb-2">Payment Method</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button @click="paymentMethod = 'cash'" 
+                                    :class="paymentMethod === 'cash' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'"
+                                    class="py-2 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="fas fa-money-bill-wave mr-2"></i>
+                                Cash
+                            </button>
+                            <button @click="paymentMethod = 'card'" 
+                                    :class="paymentMethod === 'card' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'"
+                                    class="py-2 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="fas fa-credit-card mr-2"></i>
+                                Card
+                            </button>
+                            <button @click="paymentMethod = 'gift'" 
+                                    :class="paymentMethod === 'gift' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'"
+                                    class="py-2 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="fas fa-gift mr-2"></i>
+                                Gift
+                            </button>
+                            <button @click="paymentMethod = 'other'" 
+                                    :class="paymentMethod === 'other' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'"
+                                    class="py-2 px-3 rounded-lg text-sm font-medium transition-colors">
+                                <i class="fas fa-ellipsis-h mr-2"></i>
+                                Other
+                            </button>
                         </div>
-                        
-                        <!-- Pay Button -->
+                    </div>
+                    
+                    <!-- 6. Create Take Away Order Button -->
+                    <div class="p-3 border-t border-gray-200 flex-shrink-0">
                         <button @click="processOrder()" 
                                 :disabled="orderItems.length === 0"
-                                class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                            Pay Rs. <span x-text="Math.round(total)"></span>
+                                class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
+                            <i class="fas fa-check mr-2"></i>
+                            <span x-show="orderType === 'takeaway'">Create Take Away Order</span>
+                            <span x-show="orderType === 'dine_in'">Create Dine In Order</span>
+                            <span class="ml-2">- Rs. <span x-text="Math.round(total)"></span></span>
                         </button>
                     </div>
                 </div>
@@ -392,11 +448,50 @@
                 <div class="mb-6">
                     <h4 class="font-semibold text-gray-900 mb-3">Customer Information</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                        <div class="relative">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
-                            <input type="text" x-model="takeawayCustomerInfo.name" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                   placeholder="Enter customer name">
+                            <div class="relative">
+                                <input type="text" 
+                                       x-model="takeawayCustomerInfo.name" 
+                                       @input="searchCustomers($event.target.value)"
+                                       @focus="showCustomerSuggestions = true"
+                                       @blur="setTimeout(() => showCustomerSuggestions = false, 200)"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="Enter customer name or search existing customers">
+                                
+                                <!-- Customer Suggestions Dropdown -->
+                                <div x-show="showCustomerSuggestions && customerSuggestions.length > 0" 
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 transform scale-95"
+                                     x-transition:enter-end="opacity-100 transform scale-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 transform scale-100"
+                                     x-transition:leave-end="opacity-0 transform scale-95"
+                                     class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto customer-suggestions">
+                                    <template x-for="customer in customerSuggestions" :key="customer.id">
+                                        <div @click="selectCustomer(customer)" 
+                                             class="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 customer-suggestion-item">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <div class="font-medium text-gray-900" x-text="customer.name"></div>
+                                                    <div class="text-sm text-gray-500" x-text="customer.phone"></div>
+                                                </div>
+                                                <div class="text-xs text-gray-400">
+                                                    <span x-text="customer.orders_qty + ' orders'"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <!-- Add New Customer Option -->
+                                    <div @click="addNewCustomer()" 
+                                         class="px-4 py-2 hover:bg-blue-50 cursor-pointer border-t border-gray-200 bg-gray-50">
+                                        <div class="flex items-center text-blue-600">
+                                            <i class="fas fa-plus mr-2"></i>
+                                            <span class="font-medium">Add New Customer</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
@@ -499,6 +594,116 @@
         </div>
     </div>
 
+    <!-- Portion Selection Modal -->
+    <div x-show="showPortionModal" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+        
+        <div x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 transform scale-95"
+             x-transition:enter-end="opacity-100 transform scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 transform scale-100"
+             x-transition:leave-end="opacity-0 transform scale-95"
+             class="bg-white rounded-lg p-6 max-w-md w-full mx-4 my-8 max-h-screen overflow-y-auto">
+            
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-gray-900">Select Portion</h3>
+                    <button @click="showPortionModal = false" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Food Item Info -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6" x-show="selectedFoodItem">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                            <template x-if="selectedFoodItem.image">
+                                <img :src="'/storage/' + selectedFoodItem.image" :alt="selectedFoodItem.name" class="w-full h-full object-cover">
+                            </template>
+                            <template x-if="!selectedFoodItem.image">
+                                <img src="/images/placeholder-food.svg" :alt="selectedFoodItem.name" class="w-full h-full object-cover">
+                            </template>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900" x-text="selectedFoodItem.name"></h4>
+                            <p class="text-sm text-gray-600" x-text="selectedFoodItem.description"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Portion Options -->
+                <div class="space-y-3">
+                    <!-- Full Portion -->
+                    <div class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                         :class="selectedPortion === 'full' ? 'border-blue-500 bg-blue-50' : ''"
+                         @click="selectPortion('full')">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h5 class="font-medium text-gray-900" x-text="selectedFoodItem ? (selectedFoodItem.full_portion_name || 'Full Portion') : 'Full Portion'"></h5>
+                                <p class="text-sm text-gray-600">Complete serving size</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold text-blue-600">
+                                    Rs. <span x-text="getPortionPrice('full')"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Half Portion (if available) -->
+                    <div x-show="selectedFoodItem && selectedFoodItem.has_half_portion"
+                         class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                         :class="selectedPortion === 'half' ? 'border-blue-500 bg-blue-50' : ''"
+                         @click="selectPortion('half')">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h5 class="font-medium text-gray-900" x-text="selectedFoodItem ? (selectedFoodItem.half_portion_name || 'Half Portion') : 'Half Portion'"></h5>
+                                <p class="text-sm text-gray-600">Half serving size</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold text-blue-600">
+                                    Rs. <span x-text="getPortionPrice('half')"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quantity -->
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+                    <div class="flex items-center space-x-3">
+                        <button @click="decreasePortionQuantity()" 
+                                class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
+                            <i class="fas fa-minus text-xs"></i>
+                        </button>
+                        <span class="w-12 text-center font-medium text-lg" x-text="portionQuantity"></span>
+                        <button @click="increasePortionQuantity()" 
+                                class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
+                            <i class="fas fa-plus text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Add to Order Button -->
+                <div class="mt-6">
+                    <button @click="addToOrderWithPortion()" 
+                            class="w-full bg-blue-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-600 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>
+                        Add to Order - Rs. <span x-text="getPortionPrice(selectedPortion) * portionQuantity"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function posSystem() {
             return {
@@ -510,6 +715,10 @@
                 showFavorites: false,
                 orderNumber: Math.floor(Math.random() * 900000) + 100000,
                 showTakeawayModal: false,
+                showPortionModal: false,
+                selectedFoodItem: null,
+                selectedPortion: 'full',
+                portionQuantity: 1,
                 takeawayCustomerInfo: {
                     name: '',
                     phone: ''
@@ -523,6 +732,10 @@
                     subtotal: 0,
                     tax: 0
                 },
+                
+                // Customer search functionality
+                customerSuggestions: [],
+                showCustomerSuggestions: false,
                 
                 // Food items data from backend
                 allItems: @json($foodItems),
@@ -544,11 +757,11 @@
                     return this.orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
                 },
                 
-                                 get total() {
-                     const tax = Math.round(this.subtotal * 0.14);
-                     const discount = Math.round(this.subtotal * 0.12);
-                     return this.subtotal + tax - discount;
-                 },
+                get total() {
+                    const tax = Math.round(this.subtotal * 0.14);
+                    const discount = Math.round(this.subtotal * 0.12);
+                    return this.subtotal + tax - discount;
+                },
                 
                 selectCategory(categoryId) {
                     this.selectedCategory = categoryId;
@@ -562,18 +775,104 @@
                 },
                 
                 addToOrder(item) {
-                    const existingItem = this.orderItems.find(orderItem => orderItem.id === item.id);
+                    // Check if item has half portion option
+                    if (item.has_half_portion) {
+                        this.showPortionSelection(item);
+                    } else {
+                        // For items without half portions, add directly with full portion
+                        const price = this.orderType === 'takeaway' ? item.takeaway_price : item.dine_in_price;
+                        const existingItem = this.orderItems.find(orderItem => orderItem.id === item.id);
+                        
+                        if (existingItem) {
+                            existingItem.quantity++;
+                        } else {
+                            this.orderItems.push({
+                                id: item.id,
+                                name: item.name,
+                                price: Math.round(parseFloat(price)),
+                                quantity: 1,
+                                portion: 'full'
+                            });
+                        }
+                    }
+                },
+                
+                showPortionSelection(item) {
+                    this.selectedFoodItem = item;
+                    this.selectedPortion = 'full';
+                    this.portionQuantity = 1;
+                    this.showPortionModal = true;
+                },
+                
+                selectPortion(portion) {
+                    this.selectedPortion = portion;
+                },
+                
+                getPortionPrice(portion) {
+                    if (!this.selectedFoodItem) return 0;
+                    
+                    const orderType = this.orderType === 'takeaway' ? 'takeaway' : 'dine_in';
+                    const priceField = `${portion}_portion_${orderType}_price`;
+                    
+                    if (this.selectedFoodItem[priceField] && this.selectedFoodItem[priceField] !== null) {
+                        return Math.round(parseFloat(this.selectedFoodItem[priceField]));
+                    }
+                    
+                    // Fallback to legacy pricing
+                    if (orderType === 'takeaway') {
+                        return Math.round(parseFloat(this.selectedFoodItem.takeaway_price || 0));
+                    } else {
+                        return Math.round(parseFloat(this.selectedFoodItem.dine_in_price || 0));
+                    }
+                },
+                
+                increasePortionQuantity() {
+                    this.portionQuantity++;
+                },
+                
+                decreasePortionQuantity() {
+                    if (this.portionQuantity > 1) {
+                        this.portionQuantity--;
+                    }
+                },
+                
+                addToOrderWithPortion() {
+                    if (!this.selectedFoodItem) return;
+                    
+                    const price = this.getPortionPrice(this.selectedPortion);
+                    const itemName = this.selectedFoodItem.name + ' (' + this.getPortionName(this.selectedPortion) + ')';
+                    
+                    // Check if item with same name and portion already exists
+                    const existingItem = this.orderItems.find(orderItem => 
+                        orderItem.id === this.selectedFoodItem.id && 
+                        orderItem.portion === this.selectedPortion
+                    );
                     
                     if (existingItem) {
-                        existingItem.quantity++;
+                        existingItem.quantity += this.portionQuantity;
                     } else {
-                                                 const price = this.orderType === 'takeaway' ? item.takeaway_price : item.dine_in_price;
-                         this.orderItems.push({
-                             id: item.id,
-                             name: item.name,
-                             price: Math.round(parseFloat(price)),
-                             quantity: 1
-                         });
+                        this.orderItems.push({
+                            id: this.selectedFoodItem.id,
+                            name: itemName,
+                            price: price,
+                            quantity: this.portionQuantity,
+                            portion: this.selectedPortion
+                        });
+                    }
+                    
+                    this.showPortionModal = false;
+                    this.selectedFoodItem = null;
+                    this.selectedPortion = 'full';
+                    this.portionQuantity = 1;
+                },
+                
+                getPortionName(portion) {
+                    if (!this.selectedFoodItem) return portion === 'half' ? 'Half Portion' : 'Full Portion';
+                    
+                    if (portion === 'half') {
+                        return this.selectedFoodItem.half_portion_name || 'Half Portion';
+                    } else {
+                        return this.selectedFoodItem.full_portion_name || 'Full Portion';
                     }
                 },
                 
@@ -627,6 +926,7 @@
                         items: this.orderItems.map(item => ({
                             food_item_id: item.id,
                             quantity: item.quantity,
+                            portion: item.portion || 'full',
                             notes: item.notes || null
                         }))
                     };
@@ -673,6 +973,7 @@
                         items: this.orderItems.map(item => ({
                             food_item_id: item.id,
                             quantity: item.quantity,
+                            portion: item.portion || 'full',
                             notes: item.notes || null
                         }))
                     };
@@ -742,6 +1043,7 @@
                         items: this.orderItems.map(item => ({
                             food_item_id: item.id,
                             quantity: item.quantity,
+                            portion: item.portion || 'full',
                             notes: item.notes || null
                         }))
                     };
@@ -784,6 +1086,40 @@
                         console.error('Error:', error);
                         alert('Error completing order. Please try again.');
                     }
+                },
+
+                // Customer search functionality
+                async searchCustomers(query) {
+                    if (query.length < 2) {
+                        this.customerSuggestions = [];
+                        this.showCustomerSuggestions = false;
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/customers?q=${encodeURIComponent(query)}`);
+                        const data = await response.json();
+                        this.customerSuggestions = data.customers || [];
+                        this.showCustomerSuggestions = this.customerSuggestions.length > 0;
+                    } catch (error) {
+                        console.error('Error fetching customers:', error);
+                        this.customerSuggestions = [];
+                        this.showCustomerSuggestions = false;
+                    }
+                },
+
+                selectCustomer(customer) {
+                    this.takeawayCustomerInfo.name = customer.name;
+                    this.takeawayCustomerInfo.phone = customer.phone;
+                    this.customerSuggestions = [];
+                    this.showCustomerSuggestions = false;
+                },
+
+                addNewCustomer() {
+                    this.takeawayCustomerInfo.name = '';
+                    this.takeawayCustomerInfo.phone = '';
+                    this.customerSuggestions = [];
+                    this.showCustomerSuggestions = false;
                 }
             }
         }

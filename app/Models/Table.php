@@ -37,7 +37,7 @@ class Table extends Model
     public function currentOrder()
     {
         return $this->orders()
-            ->where('status', 'confirmed')
+            ->whereIn('status', ['confirmed', 'pending'])
             ->latest()
             ->first();
     }
@@ -55,7 +55,7 @@ class Table extends Model
      */
     public function isOccupied(): bool
     {
-        return $this->status === 'occupied';
+        return $this->status === 'occupied' || $this->currentOrder() !== null;
     }
 
     /**

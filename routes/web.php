@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\POSController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\AuthController;
 
 // Authentication Routes
@@ -50,7 +51,6 @@ Route::middleware(['auth.pos'])->group(function () {
     Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
     Route::get('/pos/category/{categoryId}/items', [POSController::class, 'getFoodItemsByCategory'])->name('pos.category.items');
     Route::post('/pos/order', [POSController::class, 'storeOrder'])->name('pos.order.store');
-    Route::get('/orders/{order}', [POSController::class, 'getOrderDetails'])->name('orders.show');
 
     // Table Management Routes
     Route::get('/tables', [App\Http\Controllers\TableController::class, 'index'])->name('tables.index');
@@ -63,4 +63,16 @@ Route::middleware(['auth.pos'])->group(function () {
     Route::resource('customers', CustomerController::class);
     Route::get('/customers/search', [CustomerController::class, 'search'])->name('customers.search');
     Route::get('/customers/statistics', [CustomerController::class, 'statistics'])->name('customers.statistics');
+    
+    // Order Management Routes
+    Route::resource('orders', OrderController::class);
+    Route::get('/orders/search', [OrderController::class, 'search'])->name('orders.search');
+    Route::get('/orders/statistics', [OrderController::class, 'statistics'])->name('orders.statistics');
+    
+    // Override the orders.show route to use POSController for JSON responses
+    Route::get('/orders/{order}', [POSController::class, 'getOrderDetails'])->name('orders.show');
+    
+    // API Routes for Customer Search
+    Route::get('/api/customers', [CustomerController::class, 'apiSearch'])->name('api.customers.search');
+    Route::post('/api/customers', [CustomerController::class, 'apiStore'])->name('api.customers.store');
 });

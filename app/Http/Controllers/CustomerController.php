@@ -92,10 +92,30 @@ class CustomerController extends Controller
      */
     public function destroy(Customer $customer)
     {
-        $customer->delete();
-
-        return redirect()->route('customers.index')
-            ->with('success', 'Customer deleted successfully!');
+        try {
+            $customer->delete();
+            
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Customer deleted successfully!'
+                ]);
+            }
+            
+            return redirect()->route('customers.index')
+                ->with('success', 'Customer deleted successfully!');
+                
+        } catch (\Exception $e) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error deleting customer: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->route('customers.index')
+                ->with('error', 'Error deleting customer: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -128,5 +148,50 @@ class CustomerController extends Controller
         ];
 
         return view('customers.statistics', compact('stats'));
+    }
+
+    /**
+     * API Search customers by name or phone
+     */
+    public function apiSearch(Request $request)
+    {
+        $query = $request->get('q');
+        
+        if (strlen($query) < 2) {
+            return response()->json(['customers' => []]);
+        }
+        
+        $customers = Customer::where('name', 'like', "%{$query}%")
+            ->orWhere('phone', 'like', "%{$query}%")
+            ->withCount('orders')
+            ->orderBy('orders_qty', 'desc')
+            ->orderBy('name', 'asc')
+            ->limit(10)
+            ->get();
+
+        return response()->json(['customers' => $customers]);
+    }
+
+    /**
+     * API Store a new customer
+     */
+    public function apiStore(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20|unique:customers,phone',
+        ]);
+
+        $customer = Customer::create([
+            'name' => $request->name,
+            'phone' => $request->phone,
+            'orders_qty' => 0,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'customer' => $customer->loadCount('orders'),
+            'message' => 'Customer created successfully!'
+        ]);
     }
 }

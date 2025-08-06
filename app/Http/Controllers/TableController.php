@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Table;
+use App\Models\Customer;
 use Illuminate\Support\Facades\Log;
 
 class TableController extends Controller
@@ -177,20 +178,32 @@ class TableController extends Controller
     
     public function closeOrder(Request $request)
     {
-        $request->validate([
-            'order_id' => 'required|exists:orders,id',
-            'table_number' => 'required|integer|min:1|max:50',
-            'customer_name' => 'required|string|max:255',
-            'customer_phone' => 'nullable|string|max:20',
-            'payment_method' => 'required|in:cash,card,gift,other',
-            'discount_amount' => 'nullable|numeric|min:0',
-            'customer_paid' => 'required|numeric|min:0',
-            'balance_returned' => 'nullable|numeric|min:0',
-            'total_amount' => 'required|numeric|min:0'
-        ]);
-        
         try {
-            $order = Order::findOrFail($request->order_id);
+            Log::info('Close Order Request:', [
+                'request_data' => $request->all()
+            ]);
+            
+            $request->validate([
+                'order_id' => 'required|exists:orders,id',
+                'table_number' => 'required|integer|min:1|max:50',
+                'customer_name' => 'required|string|max:255',
+                'customer_phone' => 'nullable|string|max:20',
+                'payment_method' => 'required|in:cash,card,gift',
+                'discount_amount' => 'nullable|numeric|min:0',
+                'customer_paid' => 'required|numeric|min:0',
+                'balance_returned' => 'nullable|numeric|min:0',
+                'total_amount' => 'required|numeric|min:0'
+            ]);
+            
+            $order = Order::with('orderItems')->findOrFail($request->order_id);
+            
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found'
+                ], 404);
+            }
+            
             $table = Table::where('number', $request->table_number)->first();
             
             if (!$table) {
@@ -200,11 +213,53 @@ class TableController extends Controller
                 ], 404);
             }
             
+            // Handle customer creation/updating
+            $customer = null;
+            if ($request->customer_phone) {
+                // Try to find existing customer by phone number
+                $customer = Customer::where('phone', $request->customer_phone)->first();
+                
+                if ($customer) {
+                    // Update existing customer name if it's different
+                    if ($customer->name !== $request->customer_name) {
+                        $customer->update(['name' => $request->customer_name]);
+                    }
+                } else {
+                    // Create new customer
+                    $customer = Customer::create([
+                        'name' => $request->customer_name,
+                        'phone' => $request->customer_phone,
+                        'orders_qty' => 0
+                    ]);
+                }
+                
+                // Increment customer's orders quantity
+                $customer->incrementOrdersQty();
+            } else {
+                // If no phone number provided, try to find customer by name only
+                $customer = Customer::where('name', $request->customer_name)
+                    ->whereNull('phone')
+                    ->first();
+                
+                if ($customer) {
+                    // Update existing customer
+                    $customer->incrementOrdersQty();
+                } else {
+                    // Create new customer with just name
+                    $customer = Customer::create([
+                        'name' => $request->customer_name,
+                        'phone' => null,
+                        'orders_qty' => 1
+                    ]);
+                }
+            }
+            
             // Calculate tax amount (10% of subtotal)
             $taxAmount = $order->subtotal * 0.1;
             
-            // Update order with payment details
+            // Update order with payment details and customer_id
             $order->update([
+                'customer_id' => $customer->id,
                 'customer_name' => $request->customer_name,
                 'customer_phone' => $request->customer_phone,
                 'payment_method' => $request->payment_method,
@@ -225,19 +280,38 @@ class TableController extends Controller
                 'order_number' => $order->order_number,
                 'table_number' => $request->table_number,
                 'customer_name' => $request->customer_name,
+                'customer_id' => $customer->id,
                 'total_amount' => $request->total_amount
             ]);
             
             return response()->json([
                 'success' => true,
                 'message' => 'Order completed successfully',
-                'order' => $order->fresh()
+                'order' => $order->fresh(),
+                'customer' => $customer
             ]);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation error in closeOrder:', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+            
+            $errorMessages = [];
+            foreach ($e->errors() as $field => $errors) {
+                $errorMessages = array_merge($errorMessages, $errors);
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error: ' . implode(', ', $errorMessages)
+            ], 422);
             
         } catch (\Exception $e) {
             Log::error('Error completing order: ' . $e->getMessage(), [
-                'order_id' => $request->order_id,
-                'table_number' => $request->table_number
+                'order_id' => $request->order_id ?? 'unknown',
+                'table_number' => $request->table_number ?? 'unknown',
+                'request_data' => $request->all()
             ]);
             
             return response()->json([

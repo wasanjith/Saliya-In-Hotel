@@ -161,6 +161,28 @@
             height: 24px;
             object-fit: contain;
         }
+        
+        /* Customer suggestions dropdown styles */
+        .customer-suggestions {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+        
+        .customer-suggestion-item {
+            transition: all 0.2s ease;
+        }
+        
+        .customer-suggestion-item:hover {
+            background-color: #f3f4f6;
+            transform: translateX(2px);
+        }
+        
+        .customer-suggestion-item:active {
+            background-color: #e5e7eb;
+        }
     </style>
 </head>
 <body class="bg-gray-100" x-data="tableMapSystem()">
@@ -186,7 +208,7 @@
                         <i class="fas fa-chart-bar mr-3"></i>
                         <span>Dashboard</span>
                     </a>
-                    <a href="#" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
+                    <a href="/orders" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 rounded-lg">
                         <i class="fas fa-shopping-bag mr-3"></i>
                         <span>Orders</span>
                     </a>
@@ -518,11 +540,50 @@
                 <div class="mb-6">
                     <h4 class="font-semibold text-gray-900 mb-3">Customer Information</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                        <div class="relative">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
-                            <input type="text" x-model="customerInfo.name" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                   placeholder="Enter customer name">
+                            <div class="relative">
+                                <input type="text" 
+                                       x-model="customerInfo.name" 
+                                       @input="searchCustomers($event.target.value)"
+                                       @focus="showCustomerSuggestions = true"
+                                       @blur="setTimeout(() => showCustomerSuggestions = false, 200)"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="Enter customer name or search existing customers">
+                                
+                                <!-- Customer Suggestions Dropdown -->
+                                <div x-show="showCustomerSuggestions && customerSuggestions.length > 0" 
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 transform scale-95"
+                                     x-transition:enter-end="opacity-100 transform scale-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 transform scale-100"
+                                     x-transition:leave-end="opacity-0 transform scale-95"
+                                     class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto customer-suggestions">
+                                    <template x-for="customer in customerSuggestions" :key="customer.id">
+                                        <div @click="selectCustomer(customer)" 
+                                             class="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0 customer-suggestion-item">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <div class="font-medium text-gray-900" x-text="customer.name"></div>
+                                                    <div class="text-sm text-gray-500" x-text="customer.phone"></div>
+                                                </div>
+                                                <div class="text-xs text-gray-400">
+                                                    <span x-text="customer.orders_qty + ' orders'"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <!-- Add New Customer Option -->
+                                    <div @click="addNewCustomer()" 
+                                         class="px-4 py-2 hover:bg-blue-50 cursor-pointer border-t border-gray-200 bg-gray-50">
+                                        <div class="flex items-center text-blue-600">
+                                            <i class="fas fa-plus mr-2"></i>
+                                            <span class="font-medium">Add New Customer</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
@@ -650,6 +711,8 @@
                     balance: 0
                 },
                 orderId: null,
+                customerSuggestions: [], // New for customer suggestions
+                showCustomerSuggestions: false, // New for customer suggestions
                 
                 async init() {
                     // Get order ID from URL params
@@ -780,7 +843,68 @@
                     }
                 },
                 
+                // New functions for customer suggestions
+                async searchCustomers(query) {
+                    if (query.length < 2) {
+                        this.customerSuggestions = [];
+                        this.showCustomerSuggestions = false;
+                        return;
+                    }
+                    try {
+                        const response = await fetch(`/api/customers?q=${encodeURIComponent(query)}`);
+                        const data = await response.json();
+                        this.customerSuggestions = data.customers || [];
+                        this.showCustomerSuggestions = this.customerSuggestions.length > 0;
+                    } catch (error) {
+                        console.error('Error searching customers:', error);
+                        this.customerSuggestions = [];
+                        this.showCustomerSuggestions = false;
+                    }
+                },
 
+                selectCustomer(customer) {
+                    this.customerInfo.name = customer.name;
+                    this.customerInfo.phone = customer.phone;
+                    this.customerSuggestions = [];
+                    this.showCustomerSuggestions = false;
+                },
+
+                addNewCustomer() {
+                    this.customerInfo.name = '';
+                    this.customerInfo.phone = '';
+                    this.customerSuggestions = [];
+                    this.showCustomerSuggestions = false;
+                },
+
+                async saveNewCustomer() {
+                    if (!this.customerInfo.name || !this.customerInfo.phone) {
+                        alert('Customer name and phone number are required.');
+                        return;
+                    }
+                    try {
+                        const response = await fetch('/api/customers', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                name: this.customerInfo.name,
+                                phone: this.customerInfo.phone
+                            })
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            alert('New customer added successfully!');
+                            this.customerSuggestions.push(data.customer); // Add to suggestions
+                        } else {
+                            alert('Error adding new customer: ' + data.message);
+                        }
+                    } catch (error) {
+                        console.error('Error saving new customer:', error);
+                        alert('Error saving new customer. Please try again.');
+                    }
+                },
                 
                 async confirmTableSelection() {
                     this.showConfirmModal = true;
@@ -824,27 +948,57 @@
                     
                     // Load order details
                     try {
+                        if (!this.selectedTableInfo || !this.selectedTableInfo.current_order || !this.selectedTableInfo.current_order.id) {
+                            alert('No order found for this table.');
+                            return;
+                        }
+                        
                         const orderId = this.selectedTableInfo.current_order.id;
+                        console.log('Loading order details for order ID:', orderId);
+                        
                         const response = await fetch(`/orders/${orderId}`);
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
                         const data = await response.json();
+                        
+                        // Handle both successful and error responses
+                        if (data.success === false) {
+                            throw new Error(data.message || 'Failed to load order details');
+                        }
                         
                         this.orderToClose = data.order;
                         this.orderItems = data.order_items || [];
                         
+                        // Set customer info if available from the order
+                        if (this.orderToClose && this.orderToClose.customer_name) {
+                            this.customerInfo.name = this.orderToClose.customer_name;
+                            this.customerInfo.phone = this.orderToClose.customer_phone || '';
+                        }
+                        
                         // Calculate initial amounts
-                        this.paymentInfo.totalAmount = parseFloat(this.orderToClose.total_amount || 0);
-                        this.paymentInfo.paidAmount = this.paymentInfo.totalAmount;
-                        this.calculatePayment();
+                        if (this.orderToClose) {
+                            this.paymentInfo.totalAmount = parseFloat(this.orderToClose.total_amount || 0);
+                            this.paymentInfo.paidAmount = this.paymentInfo.totalAmount;
+                            this.calculatePayment();
+                        }
                         
                         this.showCloseOrderModal = true;
                     } catch (error) {
                         console.error('Error loading order details:', error);
-                        alert('Error loading order details. Please try again.');
+                        alert('Error loading order details: ' + error.message);
+                        // Don't show modal on error
                     }
                 },
                 
                 calculatePayment() {
-                    const subtotal = parseFloat(this.orderToClose?.subtotal || 0);
+                    if (!this.orderToClose) {
+                        return;
+                    }
+                    
+                    const subtotal = parseFloat(this.orderToClose.subtotal || 0);
                     const tax = subtotal * 0.1;
                     const discount = parseFloat(this.paymentInfo.discount || 0);
                     
@@ -858,25 +1012,45 @@
                         return;
                     }
                     
+                    if (!this.orderToClose || !this.orderToClose.id) {
+                        alert('No order found to close.');
+                        return;
+                    }
+                    
+                    if (!this.selectedTableInfo || !this.selectedTableInfo.number) {
+                        alert('No table information found.');
+                        return;
+                    }
+                    
                     try {
+                        console.log('Closing order:', this.orderToClose.id);
+                        
+                        const requestData = {
+                            order_id: this.orderToClose.id,
+                            table_number: this.selectedTableInfo.number,
+                            customer_name: this.customerInfo.name,
+                            customer_phone: this.customerInfo.phone || '',
+                            payment_method: this.paymentInfo.method,
+                            discount_amount: parseFloat(this.paymentInfo.discount || 0),
+                            customer_paid: parseFloat(this.paymentInfo.paidAmount),
+                            balance_returned: Math.max(0, this.paymentInfo.balance),
+                            total_amount: this.paymentInfo.totalAmount
+                        };
+                        
+                        console.log('Request data:', requestData);
+                        
                         const response = await fetch('/api/close-order', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             },
-                            body: JSON.stringify({
-                                order_id: this.orderToClose.id,
-                                table_number: this.selectedTableInfo.number,
-                                customer_name: this.customerInfo.name,
-                                customer_phone: this.customerInfo.phone,
-                                payment_method: this.paymentInfo.method,
-                                discount_amount: parseFloat(this.paymentInfo.discount || 0),
-                                customer_paid: parseFloat(this.paymentInfo.paidAmount),
-                                balance_returned: Math.max(0, this.paymentInfo.balance),
-                                total_amount: this.paymentInfo.totalAmount
-                            })
+                            body: JSON.stringify(requestData)
                         });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
                         
                         const result = await response.json();
                         
@@ -895,7 +1069,7 @@
                         }
                     } catch (error) {
                         console.error('Error:', error);
-                        alert('Error completing order. Please try again.');
+                        alert('Error completing order: ' + error.message);
                     }
                 },
                 

@@ -67,18 +67,71 @@ class FoodItemResource extends Resource
                 Forms\Components\Section::make('Pricing')
                     ->schema([
                         Forms\Components\TextInput::make('dine_in_price')
-                            ->required()
+                            ->label('Dine-in Price (Legacy)')
                             ->numeric()
                             ->prefix('Rs.')
-                            ->step(1),
+                            ->step(1)
+                            ->helperText('Legacy field - use portion-specific pricing below'),
                         
                         Forms\Components\TextInput::make('takeaway_price')
-                            ->required()
+                            ->label('Takeaway Price (Legacy)')
                             ->numeric()
                             ->prefix('Rs.')
-                            ->step(1),
+                            ->step(1)
+                            ->helperText('Legacy field - use portion-specific pricing below'),
                     ])
                     ->columns(2),
+                
+                Forms\Components\Section::make('Portion Pricing')
+                    ->schema([
+                        Forms\Components\Toggle::make('has_half_portion')
+                            ->label('Has Half Portion')
+                            ->default(false)
+                            ->reactive(),
+                        
+                        Forms\Components\TextInput::make('full_portion_name')
+                            ->label('Full Portion Name')
+                            ->default('Full Portion')
+                            ->maxLength(255),
+                        
+                        Forms\Components\TextInput::make('half_portion_name')
+                            ->label('Half Portion Name')
+                            ->default('Half Portion')
+                            ->maxLength(255)
+                            ->visible(fn (Forms\Get $get) => $get('has_half_portion')),
+                        
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('full_portion_dine_in_price')
+                                    ->label('Full Portion - Dine-in Price')
+                                    ->required()
+                                    ->numeric()
+                                    ->prefix('Rs.')
+                                    ->step(1),
+                                
+                                Forms\Components\TextInput::make('full_portion_takeaway_price')
+                                    ->label('Full Portion - Takeaway Price')
+                                    ->required()
+                                    ->numeric()
+                                    ->prefix('Rs.')
+                                    ->step(1),
+                                
+                                Forms\Components\TextInput::make('half_portion_dine_in_price')
+                                    ->label('Half Portion - Dine-in Price')
+                                    ->numeric()
+                                    ->prefix('Rs.')
+                                    ->step(1)
+                                    ->visible(fn (Forms\Get $get) => $get('has_half_portion')),
+                                
+                                Forms\Components\TextInput::make('half_portion_takeaway_price')
+                                    ->label('Half Portion - Takeaway Price')
+                                    ->numeric()
+                                    ->prefix('Rs.')
+                                    ->step(1)
+                                    ->visible(fn (Forms\Get $get) => $get('has_half_portion')),
+                            ]),
+                    ])
+                    ->columns(1),
                 
                 Forms\Components\Section::make('Settings')
                     ->schema([
@@ -117,11 +170,18 @@ class FoodItemResource extends Resource
                 Tables\Columns\TextColumn::make('category.name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('dine_in_price')
-                    ->formatStateUsing(fn ($state) => 'Rs. ' . number_format($state, 0))
+                Tables\Columns\TextColumn::make('full_portion_dine_in_price')
+                    ->label('Full Portion - Dine-in')
+                    ->formatStateUsing(fn ($state) => $state ? 'Rs. ' . number_format($state, 0) : '-')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('takeaway_price')
-                    ->formatStateUsing(fn ($state) => 'Rs. ' . number_format($state, 0))
+                Tables\Columns\TextColumn::make('half_portion_dine_in_price')
+                    ->label('Half Portion - Dine-in')
+                    ->formatStateUsing(fn ($state) => $state ? 'Rs. ' . number_format($state, 0) : '-')
+                    ->sortable()
+                    ->visible(fn ($record) => $record && $record->has_half_portion),
+                Tables\Columns\IconColumn::make('has_half_portion')
+                    ->label('Half Portion')
+                    ->boolean()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_available')
                     ->boolean()
@@ -141,6 +201,8 @@ class FoodItemResource extends Resource
                     ->label('Available'),
                 Tables\Filters\TernaryFilter::make('is_featured')
                     ->label('Featured'),
+                Tables\Filters\TernaryFilter::make('has_half_portion')
+                    ->label('Has Half Portion'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

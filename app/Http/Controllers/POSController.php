@@ -59,6 +59,7 @@ class POSController extends Controller
             'items' => 'required|array|min:1',
             'items.*.food_item_id' => 'required|exists:food_items,id',
             'items.*.quantity' => 'required|integer|min:1',
+            'items.*.portion' => 'nullable|in:full,half',
             'payment_method' => 'required|in:cash,card,gift,other',
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:20',
@@ -110,16 +111,30 @@ class POSController extends Controller
                     throw new \Exception("Food item '{$foodItem->name}' is not available");
                 }
                 
-                $price = $request->order_type === 'takeaway' ? $foodItem->takeaway_price : $foodItem->dine_in_price;
+                // Get portion and order type
+                $portion = $item['portion'] ?? 'full';
+                $orderType = $request->order_type === 'takeaway' ? 'takeaway' : 'dine_in';
+                
+                // Get price based on portion and order type
+                $price = $foodItem->getPrice($portion, $orderType);
                 $totalPrice = $price * $item['quantity'];
+
+                // Create item name with portion
+                $itemName = $foodItem->name;
+                if ($portion === 'half' && $foodItem->has_half_portion) {
+                    $itemName .= ' (' . $foodItem->getPortionName('half') . ')';
+                } else {
+                    $itemName .= ' (' . $foodItem->getPortionName('full') . ')';
+                }
 
                 // Add item to the JSON array
                 $itemsArray[] = [
                     'food_item_id' => $item['food_item_id'],
-                    'item_name' => $foodItem->name,
+                    'item_name' => $itemName,
                     'quantity' => $item['quantity'],
                     'unit_price' => floatval($price),
                     'total_price' => floatval($totalPrice),
+                    'portion' => $portion,
                     'notes' => $item['notes'] ?? null,
                 ];
 
@@ -203,49 +218,64 @@ class POSController extends Controller
 
     public function getOrderDetails(Order $order)
     {
-        // Load the order with its items
-        $order->load('orderItems');
+        try {
+            // Load the order with its items and customer
+            $order->load(['orderItems', 'customer']);
 
-        // Debug logging for order retrieval
-        Log::info('Order Details Request:', [
-            'order_id' => $order->id,
-            'order_items_count' => $order->orderItems->count(),
-            'raw_order_items' => $order->orderItems->toArray(),
-            'subtotal' => $order->subtotal,
-            'total_amount' => $order->total_amount,
-        ]);
+            // Debug logging for order retrieval
+            Log::info('Order Details Request:', [
+                'order_id' => $order->id,
+                'order_items_count' => $order->orderItems->count(),
+                'subtotal' => $order->subtotal,
+                'total_amount' => $order->total_amount,
+            ]);
 
-        // Transform the order data to include individual items from JSON structure
-        $orderData = $order->toArray();
-        
-        // Extract individual items from JSON structure for easier frontend consumption
-        $allItems = [];
-        foreach ($order->orderItems as $orderItem) {
-            if (isset($orderItem->items) && is_array($orderItem->items)) {
-                foreach ($orderItem->items as $item) {
-                    $allItems[] = [
-                        'id' => $item['food_item_id'],
-                        'food_item_id' => $item['food_item_id'],
-                        'item_name' => $item['item_name'],
-                        'quantity' => $item['quantity'],
-                        'unit_price' => $item['unit_price'],
-                        'total_price' => $item['total_price'],
-                        'notes' => $item['notes'] ?? null,
-                    ];
+            // Transform the order data to include individual items from JSON structure
+            $orderData = $order->toArray();
+            
+            // Extract individual items from JSON structure for easier frontend consumption
+            $allItems = [];
+            foreach ($order->orderItems as $orderItem) {
+                // Check if items field exists and is not null
+                if ($orderItem->items && is_array($orderItem->items)) {
+                    foreach ($orderItem->items as $item) {
+                        if (is_array($item) && isset($item['food_item_id'])) {
+                            $allItems[] = [
+                                'id' => $item['food_item_id'],
+                                'food_item_id' => $item['food_item_id'],
+                                'item_name' => $item['item_name'] ?? 'Unknown Item',
+                                'quantity' => $item['quantity'] ?? 1,
+                                'unit_price' => $item['unit_price'] ?? 0,
+                                'total_price' => $item['total_price'] ?? 0,
+                                'notes' => $item['notes'] ?? null,
+                                'portion' => $item['portion'] ?? 'full',
+                            ];
+                        }
+                    }
                 }
             }
+            
+            // Add the extracted items to the order data for backward compatibility
+            $orderData['order_items'] = $allItems;
+
+            // Return the order details as JSON
+            return response()->json([
+                'success' => true,
+                'order' => $orderData,
+                'order_items' => $allItems
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error getting order details:', [
+                'order_id' => $order->id ?? 'unknown',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading order details: ' . $e->getMessage()
+            ], 500);
         }
-        
-        // Add the extracted items to the order data for backward compatibility
-        $orderData['order_items'] = $allItems;
-
-
-
-        // Return the order details as JSON
-        return response()->json([
-            'success' => true,
-            'order' => $orderData,
-            'order_items' => $allItems
-        ]);
     }
 }
