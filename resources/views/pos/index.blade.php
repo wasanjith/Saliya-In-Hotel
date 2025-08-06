@@ -191,7 +191,12 @@
                     <!-- Order Header -->
                     <div class="p-4 border-b border-gray-200">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-lg font-semibold">Order list</h3>
+                            <div>
+                                <h3 class="text-lg font-semibold">Order list</h3>
+                                <div x-show="existingOrderId" class="text-xs text-blue-600 font-medium mt-1">
+                                    Updating existing order
+                                </div>
+                            </div>
                             <div class="text-sm text-gray-500">
                                 Transaction #<span x-text="orderNumber"></span>
                             </div>
@@ -345,15 +350,20 @@
 
     <script>
         function posSystem() {
+            // Get order_id from URL parameters if present
+            const urlParams = new URLSearchParams(window.location.search);
+            const existingOrderId = urlParams.get('order_id');
+            
             return {
                 selectedCategory: 'all',
-                orderType: 'takeaway',
+                orderType: existingOrderId && @json($selectedTable) ? 'dine_in' : 'takeaway', // Auto-set to dine_in if coming from table assignment
                 paymentMethod: 'cash',
                 orderItems: [],
                 favoriteItems: [],
                 showFavorites: false,
                 orderNumber: Math.floor(Math.random() * 900000) + 100000,
                 selectedTable: @json($selectedTable),
+                existingOrderId: existingOrderId, // Store the existing order ID
                 
                 // Food items data from backend
                 allItems: @json($foodItems),
@@ -459,6 +469,7 @@
                         order_type: this.orderType,
                         payment_method: this.paymentMethod,
                         table_id: this.selectedTable ? this.selectedTable.id : null,
+                        order_id: this.existingOrderId, // Include existing order ID if present
                         items: this.orderItems.map(item => ({
                             food_item_id: item.id,
                             quantity: item.quantity
@@ -478,9 +489,19 @@
                         const result = await response.json();
                         
                         if (result.success) {
-                            alert('Order placed successfully!');
+                            const successMessage = this.existingOrderId ? 
+                                'Order updated successfully!' : 
+                                'Order placed successfully!';
+                            alert(successMessage);
                             this.orderItems = [];
                             this.orderNumber = Math.floor(Math.random() * 900000) + 100000;
+                            
+                            // If we updated an existing order, redirect back to tables
+                            if (this.existingOrderId && this.selectedTable) {
+                                setTimeout(() => {
+                                    window.location.href = '{{ route("tables.index") }}';
+                                }, 1000);
+                            }
                         } else {
                             alert('Error placing order: ' + result.message);
                         }

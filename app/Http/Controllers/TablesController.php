@@ -16,7 +16,39 @@ class TablesController extends Controller
 
         // Load current orders for each table
         foreach ($tables as $table) {
-            $table->current_order = $table->getCurrentOrder();
+            $currentOrder = $table->getCurrentOrder();
+            
+            if ($currentOrder) {
+                // Transform the order to extract individual items from JSON structure
+                $currentOrder->load('orderItems');
+                $orderData = $currentOrder->toArray();
+                
+                // Extract individual items from JSON structure for easier frontend consumption
+                $allItems = [];
+                foreach ($currentOrder->orderItems as $orderItem) {
+                    if (isset($orderItem->items) && is_array($orderItem->items)) {
+                        foreach ($orderItem->items as $item) {
+                            $allItems[] = [
+                                'id' => $item['food_item_id'],
+                                'food_item_id' => $item['food_item_id'],
+                                'item_name' => $item['item_name'],
+                                'quantity' => $item['quantity'],
+                                'unit_price' => $item['unit_price'],
+                                'total_price' => $item['total_price'],
+                                'notes' => $item['notes'] ?? null,
+                            ];
+                        }
+                    }
+                }
+                
+                // Add the extracted items to the order data
+                $orderData['order_items'] = $allItems;
+                
+                // Convert back to object for consistency
+                $table->current_order = (object) $orderData;
+            } else {
+                $table->current_order = null;
+            }
         }
 
         return view('tables.index', compact('tables'));
@@ -92,7 +124,35 @@ class TablesController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return response()->json($orders);
+        // Transform orders to extract individual items from JSON structure
+        $transformedOrders = $orders->map(function ($order) {
+            $orderData = $order->toArray();
+            
+            // Extract individual items from JSON structure for easier frontend consumption
+            $allItems = [];
+            foreach ($order->orderItems as $orderItem) {
+                if (isset($orderItem->items) && is_array($orderItem->items)) {
+                    foreach ($orderItem->items as $item) {
+                        $allItems[] = [
+                            'id' => $item['food_item_id'],
+                            'food_item_id' => $item['food_item_id'],
+                            'item_name' => $item['item_name'],
+                            'quantity' => $item['quantity'],
+                            'unit_price' => $item['unit_price'],
+                            'total_price' => $item['total_price'],
+                            'notes' => $item['notes'] ?? null,
+                        ];
+                    }
+                }
+            }
+            
+            // Add the extracted items to the order data for backward compatibility
+            $orderData['order_items'] = $allItems;
+            
+            return $orderData;
+        });
+
+        return response()->json($transformedOrders);
     }
 
     public function completeOrder(Request $request, Order $order)

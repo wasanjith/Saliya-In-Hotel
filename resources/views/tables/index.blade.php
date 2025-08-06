@@ -189,6 +189,18 @@
                                          'table-reserved': table.status === 'reserved',
                                          'table-maintenance': table.status === 'maintenance'
                                      }">
+                                    <div class="flex justify-center mb-4">
+                                        <svg viewBox="0 0 64 64" class="h-16 w-16" :class="{
+                                            'text-emerald-500': table.status === 'available',
+                                            'text-red-500': table.status === 'occupied',
+                                            'text-amber-500': table.status === 'reserved',
+                                            'text-gray-500': table.status === 'maintenance'
+                                        }">
+                                            <path d="M58,22H6a2,2,0,0,0-2,2v4a2,2,0,0,0,2,2H58a2,2,0,0,0,2-2V24A2,2,0,0,0,58,22Z" fill="currentColor"/>
+                                            <rect x="10" y="30" width="6" height="24" fill="currentColor"/>
+                                            <rect x="48" y="30" width="6" height="24" fill="currentColor"/>
+                                        </svg>
+                                    </div>
                                     <div class="flex items-center justify-between mb-3">
                                         <h3 class="font-semibold text-lg" x-text="table.name"></h3>
                                         <span class="text-sm font-medium px-2 py-1 rounded-full"
@@ -309,24 +321,184 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="relative top-10 mx-auto p-6 border max-w-2xl shadow-lg rounded-lg bg-white">
             <div class="mt-3">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Order Details</h3>
-                <div x-if="selectedTable && selectedTable.current_order">
-                    <p><strong>Order ID:</strong> <span x-text="selectedTable.current_order.id"></span></p>
-                    <p><strong>Total:</strong> <span x-text="selectedTable.current_order.total_amount"></span></p>
-                    <p><strong>Status:</strong> <span x-text="selectedTable.current_order.status"></span></p>
-                </div>
-                <div class="flex space-x-3 mt-6">
-                    <button @click="completeOrder" 
-                            class="flex-1 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition-colors duration-200 cursor-pointer">
-                        Pay and Finish
-                    </button>
-                    <button @click="showOrderModal = false" 
-                            class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition-colors duration-200 cursor-pointer">
-                        Cancel
+                <!-- Header -->
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold text-gray-900">Order Details</h3>
+                    <button @click="showOrderModal = false" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
+                
+                <template x-if="selectedTable && selectedTable.current_order">
+                    <div>
+                        <!-- Order Info -->
+                        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Order Number</p>
+                                    <p class="font-semibold text-lg" x-text="selectedTable.current_order.order_number"></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Table</p>
+                                    <p class="font-semibold text-lg" x-text="selectedTable.name"></p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Status</p>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium"
+                                          :class="{
+                                              'bg-yellow-100 text-yellow-800': selectedTable.current_order.status === 'pending',
+                                              'bg-blue-100 text-blue-800': selectedTable.current_order.status === 'preparing',
+                                              'bg-green-100 text-green-800': selectedTable.current_order.status === 'completed'
+                                          }"
+                                          x-text="selectedTable.current_order.status.charAt(0).toUpperCase() + selectedTable.current_order.status.slice(1)"></span>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Order Type</p>
+                                    <p class="font-semibold" x-text="selectedTable.current_order.order_type"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Order Items -->
+                        <div class="mb-6">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">Ordered Items</h4>
+                            <div class="bg-white border rounded-lg overflow-hidden">
+                                <div class="overflow-y-auto max-h-60">
+                                    <template x-if="selectedTable && selectedTable.current_order && selectedTable.current_order.order_items && selectedTable.current_order.order_items.length > 0">
+                                        <div>
+                                            <template x-for="(item, index) in selectedTable.current_order.order_items" :key="index">
+                                                <div class="flex justify-between items-center p-4 border-b border-gray-100 last:border-b-0">
+                                                    <div class="flex-1">
+                                                        <h5 class="font-medium text-gray-900" x-text="item.item_name || item.food_item_name || item.name || ('Item ' + (index + 1))"></h5>
+                                                        <p class="text-sm text-gray-600">
+                                                            <span x-text="'Qty: ' + (item.quantity || 1)"></span>
+                                                            <span class="mx-2">•</span>
+                                                            <span x-text="'₨' + parseFloat(item.unit_price || item.price || 0).toFixed(2) + ' each'"></span>
+                                                        </p>
+                                                        <template x-if="item.notes">
+                                                            <p class="text-xs text-gray-500 mt-1" x-text="'Note: ' + item.notes"></p>
+                                                        </template>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <p class="font-semibold text-gray-900" 
+                                                           x-text="'₨' + parseFloat(
+                                                              item.total_price || 
+                                                              (item.unit_price && item.quantity ? item.unit_price * item.quantity : 0) || 
+                                                              (item.price && item.quantity ? item.price * item.quantity : 0) || 
+                                                              0
+                                                           ).toFixed(2)"></p>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template x-if="!selectedTable || !selectedTable.current_order || !selectedTable.current_order.order_items || selectedTable.current_order.order_items.length === 0">
+                                        <div class="p-6 text-center">
+                                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                                                <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl mb-2"></i>
+                                                <h5 class="text-lg font-semibold text-yellow-800 mb-2">Order Created - Items Needed</h5>
+                                                <p class="text-yellow-700 text-sm mb-2">This order has been assigned to the table but no food items have been added yet.</p>
+                                                <p class="text-xs text-yellow-600" x-show="selectedTable && selectedTable.current_order">Order #<span x-text="selectedTable.current_order.order_number"></span></p>
+                                            </div>
+                                            
+                                            <div class="space-y-3">
+                                                <button x-show="selectedTable && selectedTable.current_order" 
+                                                        @click="window.location.href = `{{ route('pos.index') }}?table_id=${selectedTable.id}&order_id=${selectedTable.current_order.id}`" 
+                                                        class="w-full bg-blue-500 text-white py-3 px-4 rounded-md text-sm font-medium hover:bg-blue-600 transition-colors duration-200 flex items-center justify-center">
+                                                    <i class="fas fa-plus mr-2"></i>
+                                                    Add Items to Order
+                                                </button>
+                                                
+                                                <p class="text-xs text-gray-500">Click the button above to open the POS system and add food items to this order.</p>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Order Summary -->
+                        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-3">Order Summary</h4>
+                            <div class="space-y-2">
+                                <template x-if="selectedTable && selectedTable.current_order">
+                                    <div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Subtotal</span>
+                                            <span class="font-medium" x-text="'₨' + parseFloat(selectedTable.current_order.subtotal || 0).toFixed(2)"></span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Tax (14%)</span>
+                                            <span class="font-medium" x-text="'₨' + parseFloat(selectedTable.current_order.tax_amount || 0).toFixed(2)"></span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">Discount (12%)</span>
+                                            <span class="font-medium text-green-600" x-text="'-₨' + parseFloat(selectedTable.current_order.discount_amount || 0).toFixed(2)"></span>
+                                        </div>
+                                        <hr class="my-3">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-lg font-semibold text-gray-900">Total Amount</span>
+                                            <span class="text-xl font-bold text-green-600" 
+                                                  x-text="'₨' + parseFloat(
+                                                    selectedTable.current_order.total_amount || 
+                                                    (parseFloat(selectedTable.current_order.subtotal || 0) + 
+                                                     parseFloat(selectedTable.current_order.tax_amount || 0) - 
+                                                     parseFloat(selectedTable.current_order.discount_amount || 0))
+                                                  ).toFixed(2)"></span>
+                                        </div>
+                                        <template x-if="parseFloat(selectedTable.current_order.total_amount || 0) === 0">
+                                            <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                                <div class="flex items-center justify-center text-amber-700">
+                                                    <i class="fas fa-info-circle mr-2"></i>
+                                                    <span class="text-sm font-medium">Order total will appear after adding items</span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template x-if="!selectedTable || !selectedTable.current_order">
+                                    <div class="text-center text-gray-500 py-4">
+                                        <p>No order data available</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex space-x-3">
+                            <template x-if="selectedTable && selectedTable.current_order && selectedTable.current_order.order_items && selectedTable.current_order.order_items.length > 0">
+                                <button @click="completeOrder" 
+                                        class="flex-1 bg-green-500 text-white py-3 px-4 rounded-md hover:bg-green-600 transition-colors duration-200 cursor-pointer font-medium">
+                                    <i class="fas fa-check mr-2"></i>
+                                    Pay and Finish Order
+                                </button>
+                            </template>
+                            
+                            <template x-if="!selectedTable || !selectedTable.current_order || !selectedTable.current_order.order_items || selectedTable.current_order.order_items.length === 0">
+                                <button disabled 
+                                        class="flex-1 bg-gray-400 text-white py-3 px-4 rounded-md cursor-not-allowed font-medium opacity-50">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    Add Items First
+                                </button>
+                            </template>
+                            
+                            <button @click="showOrderModal = false" 
+                                    class="bg-gray-300 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-400 transition-colors duration-200 cursor-pointer">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Loading state -->
+                <template x-if="loadingOrder || !selectedTable || !selectedTable.current_order">
+                    <div class="text-center py-8">
+                        <i class="fas fa-spinner fa-spin text-3xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-500">Loading order details...</p>
+                    </div>
+                </template>
             </div>
         </div>
     </div>
@@ -378,6 +550,7 @@
                 showToast: false,
                 toastMessage: '',
                 toastType: 'success',
+                loadingOrder: false,
                 
                 get availableCount() {
                     return this.tables.filter(t => t.status === 'available').length;
@@ -435,7 +608,21 @@
                             if (result.success) {
                                 // Update table status locally
                                 table.status = 'occupied';
-                                table.current_order = result.order;
+                                table.current_order = {
+                                    ...result.order,
+                                    order_items: [], // Initially empty
+                                    subtotal: 0,
+                                    tax_amount: 0,
+                                    discount_amount: 0,
+                                    total_amount: 0
+                                };
+                                
+                                // Update the tables array to reflect the change
+                                const tableIndex = this.tables.findIndex(t => t.id === table.id);
+                                if (tableIndex !== -1) {
+                                    this.tables[tableIndex].status = 'occupied';
+                                    this.tables[tableIndex].current_order = table.current_order;
+                                }
                                 
                                 // Show success message
                                 this.showToastMessage('Order assigned successfully! Redirecting to POS...', 'success');
@@ -462,25 +649,73 @@
                 },
                 
                 async viewOrder(table) {
+                    console.log('ViewOrder called for table:', table);
+                    
                     if (!table.current_order) {
                         this.showToastMessage('No active order for this table.', 'error');
                         return;
                     }
 
-                    this.selectedTable = table;
+                    this.selectedTable = { ...table }; // Create a copy to avoid reference issues
+                    this.loadingOrder = true;
+                    this.showOrderModal = true; // Show modal immediately to show loading state
+                    
                     const orderId = table.current_order.id;
+                    console.log('Fetching order details for ID:', orderId);
 
                     try {
+                        // Fetch the detailed order data with items
                         const response = await fetch(`/orders/${orderId}`);
                         if (response.ok) {
                             const orderDetails = await response.json();
-                            this.selectedTable.current_order = orderDetails;
-                            this.showOrderModal = true;
+                            // Extract order items from the response with better error handling
+                            let orderItems = [];
+                            
+                            // Check different possible formats for order items
+                            if (orderDetails.order_items) {
+                                if (Array.isArray(orderDetails.order_items)) {
+                                    orderItems = orderDetails.order_items;
+                                } else if (typeof orderDetails.order_items === 'string') {
+                                    try {
+                                        orderItems = JSON.parse(orderDetails.order_items);
+                                    } catch (e) {
+                                        console.error('Error parsing order_items JSON:', e);
+                                    }
+                                }
+                            }
+                            
+                            // Use the order details as returned from the backend
+                            const completeOrderDetails = {
+                                ...orderDetails,
+                                id: orderDetails.id,
+                                order_number: orderDetails.order_number || table.current_order.order_number,
+                                status: orderDetails.status || 'pending',
+                                order_type: orderDetails.order_type || 'dine_in',
+                                order_items: orderItems,
+                                subtotal: parseFloat(orderDetails.subtotal || 0),
+                                tax_amount: parseFloat(orderDetails.tax_amount || 0),
+                                discount_amount: parseFloat(orderDetails.discount_amount || 0),
+                                total_amount: parseFloat(orderDetails.total_amount || 0)
+                            };
+                            
+                            // Update the selected table with complete order details
+                            this.selectedTable.current_order = completeOrderDetails;
+                            
+                            // Force Alpine.js to update the view
+                            this.$nextTick();
                         } else {
+                            console.error('Failed to fetch order details. Status:', response.status);
+                            const error = await response.text();
+                            console.error('Error response:', error);
                             this.showToastMessage('Failed to fetch order details.', 'error');
+                            this.showOrderModal = false;
                         }
                     } catch (error) {
+                        console.error('Error fetching order details:', error);
                         this.showToastMessage('An error occurred while fetching order details.', 'error');
+                        this.showOrderModal = false;
+                    } finally {
+                        this.loadingOrder = false;
                     }
                 },
 
@@ -501,8 +736,17 @@
                         if (response.ok) {
                             const result = await response.json();
                             if (result.success) {
+                                // Update the table in the tables array
+                                const tableIndex = this.tables.findIndex(t => t.id === this.selectedTable.id);
+                                if (tableIndex !== -1) {
+                                    this.tables[tableIndex].status = 'available';
+                                    this.tables[tableIndex].current_order = null;
+                                }
+                                
+                                // Update selected table
                                 this.selectedTable.status = 'available';
                                 this.selectedTable.current_order = null;
+                                
                                 this.showOrderModal = false;
                                 this.showToastMessage('Order completed successfully!', 'success');
                             } else {

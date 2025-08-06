@@ -44,8 +44,40 @@ class Order extends Model
         
         static::creating(function ($order) {
             if (empty($order->order_number)) {
-                $order->order_number = 'ORD-' . date('Ymd') . '-' . str_pad(static::whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
+                $order->order_number = static::generateOrderNumber();
             }
         });
+    }
+
+    /**
+     * Generate a unique order number
+     */
+    private static function generateOrderNumber()
+    {
+        $datePrefix = 'ORD-' . date('Ymd') . '-';
+        
+        // Get the latest order number for today
+        $latestOrder = static::where('order_number', 'like', $datePrefix . '%')
+            ->orderBy('order_number', 'desc')
+            ->first();
+        
+        if ($latestOrder) {
+            // Extract the sequence number from the latest order
+            $latestNumber = str_replace($datePrefix, '', $latestOrder->order_number);
+            $nextNumber = intval($latestNumber) + 1;
+        } else {
+            // First order for today
+            $nextNumber = 1;
+        }
+        
+        // Ensure uniqueness in case of race conditions
+        $attempts = 0;
+        do {
+            $orderNumber = $datePrefix . str_pad($nextNumber + $attempts, 4, '0', STR_PAD_LEFT);
+            $exists = static::where('order_number', $orderNumber)->exists();
+            $attempts++;
+        } while ($exists && $attempts < 100);
+        
+        return $orderNumber;
     }
 }

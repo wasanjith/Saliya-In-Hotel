@@ -22,3 +22,5 @@ Route::get('/tables/{table}/orders', [TablesController::class, 'getTableOrders']
 Route::post('/orders/{order}/complete', [TablesController::class, 'completeOrder'])->name('orders.complete');
 
 
+
+
