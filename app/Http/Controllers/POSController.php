@@ -250,6 +250,9 @@ class POSController extends Controller
             
             // Add the extracted items to the order data for backward compatibility
             $orderData['order_items'] = $allItems;
+            
+            // Calculate and add items_count for the tables page
+            $orderData['items_count'] = count($allItems);
 
             // Return the order details as JSON
             return response()->json([

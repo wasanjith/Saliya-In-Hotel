@@ -800,11 +800,24 @@
                 
                 async loadOrderInfo() {
                     try {
+                        console.log('Loading order info for order ID:', this.orderId);
                         const response = await fetch(`/orders/${this.orderId}`);
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
                         const data = await response.json();
+                        
+                        if (data.success === false) {
+                            throw new Error(data.message || 'Failed to load order details');
+                        }
+                        
                         this.orderInfo = data.order;
+                        console.log('Order info loaded:', this.orderInfo);
                     } catch (error) {
                         console.error('Error loading order info:', error);
+                        alert('Error loading order information: ' + error.message);
                     }
                 },
                 

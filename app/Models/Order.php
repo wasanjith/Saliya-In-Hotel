@@ -50,6 +50,13 @@ class Order extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    /**
+     * Get the kitchen slot associated with this order
+     */
+    public function kitchenSlot(): BelongsTo
+    {
+        return $this->belongsTo(KitchenSlot::class);
+    }
 
 
     protected static function boot()

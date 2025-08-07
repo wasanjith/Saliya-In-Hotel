@@ -95,6 +95,10 @@
                         <i class="fas fa-chair mr-3"></i>
                         <span>Tables</span>
                     </a>
+                    <a href="/kitchen-slots" class="flex items-center px-4 py-3 text-green-200 hover:bg-green-700 rounded-lg">
+                        <i class="fas fa-utensils mr-3"></i>
+                        <span>Kitchen Slots</span>
+                    </a>
 
                 </div>
             </nav>
@@ -267,7 +271,7 @@
                                 <i class="fas fa-utensils mr-2"></i>
                                 Dine In
                             </button>
-                            <button @click="orderType = 'takeaway'" 
+                            <button @click="handleTakeawayClick()" 
                                     :class="orderType === 'takeaway' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
                                     class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors">
                                 <i class="fas fa-shopping-bag mr-2"></i>
@@ -966,18 +970,8 @@
                         const result = await response.json();
                         
                         if (result.success) {
-                            alert('Dine-in order created successfully!');
-                            
-                            // Store the completed order ID for printing
-                            this.completedOrderId = result.order.id;
-                            this.showPrintOptions = true;
-                            
-                            // Clear order items
-                            this.orderItems = [];
-                            this.orderNumber = Math.floor(Math.random() * 900000) + 100000;
-                            
-                            // Store order ID for table assignment (optional - user can still go to tables page)
-                            sessionStorage.setItem('pendingOrderId', result.order.id);
+                            // Redirect to tables page with the order ID for table assignment
+                            window.location.href = `/tables?order_id=${result.order.id}`;
                         } else {
                             alert('Error creating order: ' + result.message);
                         }
@@ -987,16 +981,51 @@
                     }
                 },
                 
-                async processOrder() {
-                    if (this.orderItems.length === 0) return;
+                async handleTakeawayClick() {
+                    this.orderType = 'takeaway';
                     
-                    // For takeaway orders, show payment modal
-                    if (this.orderType === 'takeaway') {
-                        this.showTakeawayPaymentModal();
+                    // Check if there are items in the cart
+                    if (this.orderItems.length === 0) {
+                        alert('Please add items to your order first!');
                         return;
                     }
                     
-                    // For dine-in and delivery orders, proceed with normal flow
+                    // Store order items in session storage for kitchen slots page
+                    const orderData = {
+                        order_type: 'takeaway',
+                        items: this.orderItems.map(item => ({
+                            food_item_id: item.id,
+                            quantity: item.quantity,
+                            portion: item.portion || 'full',
+                            notes: item.notes || null
+                        })),
+                        total_amount: this.total,
+                        subtotal: this.subtotal
+                    };
+                    
+                    // Store order data in session storage
+                    sessionStorage.setItem('pendingTakeawayOrder', JSON.stringify(orderData));
+                    
+                    // Redirect to kitchen slots page for slot selection
+                    window.location.href = '/kitchen-slots?order_type=takeaway';
+                },
+                
+                async processOrder() {
+                    if (this.orderItems.length === 0) return;
+                    
+                    // For takeaway orders, redirect to kitchen slots page first
+                    if (this.orderType === 'takeaway') {
+                        await this.handleTakeawayClick();
+                        return;
+                    }
+                    
+                    // For dine-in orders, redirect to tables page first
+                    if (this.orderType === 'dine_in') {
+                        await this.handleDineInClick();
+                        return;
+                    }
+                    
+                    // For other order types, proceed with normal flow
                     const orderData = {
                         order_type: this.orderType,
                         payment_method: this.paymentMethod,
@@ -1093,26 +1122,8 @@
                         const result = await response.json();
                         
                         if (result.success) {
-                            alert('Takeaway order completed successfully!');
-                            this.showTakeawayModal = false;
-                            
-                            // Store the completed order ID for printing
-                            this.completedOrderId = result.order.id;
-                            this.showPrintOptions = true;
-                            
-                            // Reset form
-                            this.takeawayCustomerInfo = { name: '', phone: '' };
-                            this.takeawayPaymentInfo = { 
-                                method: 'cash', 
-                                paidAmount: 0, 
-                                totalAmount: 0, 
-                                balance: 0,
-                                subtotal: 0
-                            };
-                            
-                            // Clear order items
-                            this.orderItems = [];
-                            this.orderNumber = Math.floor(Math.random() * 900000) + 100000;
+                            // Redirect to kitchen slots page with the order ID for slot assignment
+                            window.location.href = `/kitchen-slots?order_id=${result.order.id}`;
                         } else {
                             alert('Error completing order: ' + result.message);
                         }
