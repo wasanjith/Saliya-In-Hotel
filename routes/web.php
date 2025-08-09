@@ -65,6 +65,7 @@ Route::middleware(['auth.pos'])->group(function () {
     Route::get('/api/kitchen-slots', [App\Http\Controllers\KitchenSlotController::class, 'getSlots'])->name('api.kitchen-slots');
     Route::post('/api/assign-kitchen-slot', [App\Http\Controllers\KitchenSlotController::class, 'assignSlot'])->name('api.assign-kitchen-slot');
     Route::post('/api/complete-kitchen-order', [App\Http\Controllers\KitchenSlotController::class, 'completeOrder'])->name('api.complete-kitchen-order');
+    Route::post('/api/close-kitchen-order', [App\Http\Controllers\KitchenSlotController::class, 'closeOrder'])->name('api.close-kitchen-order');
 
     // Customer Management Routes
     Route::resource('customers', CustomerController::class);

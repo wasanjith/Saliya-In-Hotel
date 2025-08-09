@@ -176,7 +176,7 @@
                         <i class="fas fa-chair mr-3"></i>
                         <span>Tables</span>
                     </a>
-                    <a href="/kitchen-slots" class="flex items-center px-4 py-3 text-green-200 bg-green-800 rounded-lg">
+                    <a href="/kitchen-slots" class="flex items-center px-4 py-3 text-white bg-green-800 rounded-lg">
                         <i class="fas fa-utensils mr-3"></i>
                         <span>Kitchen Slots</span>
                     </a>
@@ -336,10 +336,10 @@
                         Confirm Slot <span x-text="selectedSlot?.slot_number"></span>
                     </button>
                     <button x-show="selectedSlot && selectedSlot.status === 'occupied'" 
-                            @click="completeOrder()" 
+                            @click="openCloseOrderModal()" 
                             class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg">
                         <i class="fas fa-check-double mr-2"></i>
-                        Complete Order
+                        Close Order
                     </button>
                 </div>
             </div>
@@ -388,6 +388,235 @@
         </div>
     </div>
 
+    <!-- Slot Info Modal (for management mode) -->
+    <div x-show="showSlotInfoModal" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 transform scale-95"
+             x-transition:enter-end="opacity-100 transform scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 transform scale-100"
+             x-transition:leave-end="opacity-0 transform scale-95"
+             class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+                    <i class="fas fa-utensils text-blue-600"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Kitchen Slot <span x-text="selectedSlotInfo?.slot_number"></span></h3>
+                <div class="text-sm text-gray-500 mb-6 space-y-2">
+                    <p><strong>Status:</strong> <span x-text="getSlotStatusText(selectedSlotInfo)"></span></p>
+                    <div x-show="selectedSlotInfo?.current_order">
+                        <p><strong>Current Order:</strong> #<span x-text="selectedSlotInfo?.current_order?.order_number"></span></p>
+                        <p><strong>Amount:</strong> Rs. <span x-text="Math.round(selectedSlotInfo?.current_order?.total_amount || 0)"></span></p>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <button @click="showSlotInfoModal = false" 
+                            class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded">
+                        Close
+                    </button>
+                    <button x-show="selectedSlotInfo?.status === 'occupied'" 
+                            @click="openCloseOrderModal()" 
+                            class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">
+                        Close Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Close Order Modal -->
+    <div x-show="showCloseOrderModal" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+        <div x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 transform scale-95"
+             x-transition:enter-end="opacity-100 transform scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 transform scale-100"
+             x-transition:leave-end="opacity-0 transform scale-95"
+             class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 my-8 max-h-screen overflow-y-auto">
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-gray-900">Close Order - Slot <span x-text="selectedSlotInfo?.slot_number"></span></h3>
+                    <button @click="showCloseOrderModal = false" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-3">Order Details</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Order Number:</span>
+                            <span class="font-medium" x-text="orderToClose?.order_number"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Order Type:</span>
+                            <span class="font-medium capitalize" x-text="orderToClose?.order_type?.replace('_', ' ')"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white border rounded-lg p-4 mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-3">Items Ordered</h4>
+                    <div class="space-y-2 max-h-40 overflow-y-auto">
+                        <template x-for="item in orderItems" :key="item.id">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <div class="flex-1">
+                                    <span class="font-medium" x-text="item.item_name"></span>
+                                    <span class="text-gray-500 text-sm ml-2">x<span x-text="item.quantity"></span></span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-medium">Rs. <span x-text="Math.round(item.total_price)"></span></div>
+                                    <div class="text-sm text-gray-500">@ Rs. <span x-text="Math.round(item.unit_price)"></span></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-3">Customer Information</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="relative">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                            <div class="relative">
+                                <input type="text" x-model="customerInfo.name" 
+                                       @input="searchCustomers($event.target.value)"
+                                       @focus="showCustomerSuggestions = true"
+                                       @blur="setTimeout(() => showCustomerSuggestions = false, 200)"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="Enter customer name or search existing customers">
+                                <div x-show="showCustomerSuggestions && customerSuggestions.length > 0" 
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 transform scale-95"
+                                     x-transition:enter-end="opacity-100 transform scale-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 transform scale-100"
+                                     x-transition:leave-end="opacity-0 transform scale-95"
+                                     class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                    <template x-for="customer in customerSuggestions" :key="customer.id">
+                                        <div @click="selectCustomer(customer)" 
+                                             class="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <div class="font-medium text-gray-900" x-text="customer.name"></div>
+                                                    <div class="text-sm text-gray-500" x-text="customer.phone"></div>
+                                                </div>
+                                                <div class="text-xs text-gray-400">
+                                                    <span x-text="customer.orders_qty + ' orders'"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <div @click="addNewCustomer()" 
+                                         class="px-4 py-2 hover:bg-blue-50 cursor-pointer border-t border-gray-200 bg-gray-50">
+                                        <div class="flex items-center text-blue-600">
+                                            <i class="fas fa-plus mr-2"></i>
+                                            <span class="font-medium">Add New Customer</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                            <input type="tel" x-model="customerInfo.phone" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="Enter phone number">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <h4 class="font-semibold text-gray-900 mb-3">Payment Details</h4>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                        <div class="flex space-x-2">
+                            <button @click="paymentInfo.method = 'cash'" 
+                                    :class="paymentInfo.method === 'cash' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
+                                    class="px-4 py-2 rounded-lg text-sm font-medium">
+                                Cash
+                            </button>
+                            <button @click="paymentInfo.method = 'card'" 
+                                    :class="paymentInfo.method === 'card' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
+                                    class="px-4 py-2 rounded-lg text-sm font-medium">
+                                Card
+                            </button>
+                            <button @click="paymentInfo.method = 'gift'" 
+                                    :class="paymentInfo.method === 'gift' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'"
+                                    class="px-4 py-2 rounded-lg text-sm font-medium">
+                                Gift Card
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Subtotal:</span>
+                            <span class="font-medium">Rs. <span x-text="Math.round(orderToClose?.subtotal || 0)"></span></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Tax (10%):</span>
+                            <span class="font-medium">Rs. <span x-text="Math.round((orderToClose?.subtotal || 0) * 0.1)"></span></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Discount:</span>
+                            <div class="flex items-center space-x-2">
+                                <input type="number" x-model="paymentInfo.discount" @input="calculatePayment()"
+                                       class="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-right"
+                                       min="0" step="0.01">
+                                <span class="text-sm">Rs.</span>
+                            </div>
+                        </div>
+                        <hr class="border-gray-300">
+                        <div class="flex justify-between text-lg font-bold">
+                            <span>Total Amount:</span>
+                            <span class="text-blue-600">Rs. <span x-text="Math.round(paymentInfo.totalAmount)"></span></span>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Amount Paid by Customer</label>
+                        <input type="number" x-model="paymentInfo.paidAmount" @input="calculatePayment()"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-medium"
+                               placeholder="Enter amount paid" step="0.01" min="0">
+                    </div>
+                    <div class="mt-4 p-3 rounded-lg" :class="paymentInfo.balance >= 0 ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'">
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium" :class="paymentInfo.balance >= 0 ? 'text-green-700' : 'text-red-700'">
+                                <span x-show="paymentInfo.balance >= 0">Balance to Return:</span>
+                                <span x-show="paymentInfo.balance < 0">Amount Due:</span>
+                            </span>
+                            <span class="text-lg font-bold" :class="paymentInfo.balance >= 0 ? 'text-green-600' : 'text-red-600'">
+                                Rs. <span x-text="Math.round(Math.abs(paymentInfo.balance))"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <button @click="showCloseOrderModal = false" 
+                            class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 px-4 rounded-lg font-medium">
+                        Cancel
+                    </button>
+                    <button @click="processCloseKitchenOrder()" 
+                            :disabled="!customerInfo.name || paymentInfo.paidAmount <= 0"
+                            :class="(!customerInfo.name || paymentInfo.paidAmount <= 0) ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'"
+                            class="flex-1 text-white py-3 px-4 rounded-lg font-medium">
+                        <i class="fas fa-check mr-2"></i>
+                        Complete Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function kitchenSlotSystem() {
             return {
@@ -399,6 +628,13 @@
                 orderId: null,
                 orderType: null, // Added for takeaway flow
                 pendingOrderData: null, // Added for takeaway flow
+                showSlotInfoModal: false,
+                showCloseOrderModal: false,
+                selectedSlotInfo: null,
+                orderToClose: null,
+                orderItems: [],
+                customerInfo: { name: '', phone: '' },
+                paymentInfo: { method: 'cash', discount: 0, paidAmount: 0, totalAmount: 0, balance: 0 },
                 
                 async init() {
                     // Get order ID and order type from URL params
@@ -483,23 +719,21 @@
                 },
                 
                 selectSlot(slot) {
-                    // If no order ID and no pending order data, just show slot info
+                    // If no order ID and no pending order data, open info modal for management
                     if (!this.orderId && !this.pendingOrderData) {
                         this.showSlotInfo(slot);
                         return;
                     }
-                    
-                    // Order assignment mode
+
+                    // Order assignment mode validations
                     if (slot.status === 'occupied') {
                         alert('This kitchen slot is currently occupied.');
                         return;
                     }
-                    
                     if (slot.status === 'maintenance') {
                         alert('This kitchen slot is under maintenance.');
                         return;
                     }
-                    
                     this.selectedSlot = slot;
                     this.showConfirmModal = true;
                 },
@@ -564,8 +798,136 @@
                 },
                 
                 showSlotInfo(slot) {
-                    // For now, just show an alert
-                    alert(`Kitchen Slot ${slot.slot_number} - ${this.getSlotStatusText(slot)}`);
+                    this.selectedSlotInfo = slot;
+                    this.selectedSlot = slot; // keep selection in sync
+                    this.showSlotInfoModal = true;
+                },
+                
+                async openCloseOrderModal() {
+                    this.showSlotInfoModal = false;
+                    if (!this.selectedSlotInfo || !this.selectedSlotInfo.current_order || !this.selectedSlotInfo.current_order.id) {
+                        alert('No order found for this slot.');
+                        return;
+                    }
+                    try {
+                        const orderId = this.selectedSlotInfo.current_order.id;
+                        const response = await fetch(`/orders/${orderId}`);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        if (data.success === false) {
+                            throw new Error(data.message || 'Failed to load order details');
+                        }
+                        this.orderToClose = data.order;
+                        this.orderItems = data.order_items || [];
+                        // Pre-fill customer info if available
+                        if (this.orderToClose && this.orderToClose.customer_name) {
+                            this.customerInfo.name = this.orderToClose.customer_name;
+                            this.customerInfo.phone = this.orderToClose.customer_phone || '';
+                        }
+                        // Initialize payment amounts
+                        const subtotal = parseFloat(this.orderToClose.subtotal || 0);
+                        this.paymentInfo.totalAmount = subtotal + subtotal * 0.1 - parseFloat(this.paymentInfo.discount || 0);
+                        this.paymentInfo.paidAmount = this.paymentInfo.totalAmount;
+                        this.calculatePayment();
+                        this.showCloseOrderModal = true;
+                    } catch (error) {
+                        console.error('Error loading order details:', error);
+                        alert('Error loading order details: ' + error.message);
+                    }
+                },
+                
+                calculatePayment() {
+                    if (!this.orderToClose) return;
+                    const subtotal = parseFloat(this.orderToClose.subtotal || 0);
+                    const tax = subtotal * 0.1;
+                    const discount = parseFloat(this.paymentInfo.discount || 0);
+                    this.paymentInfo.totalAmount = subtotal + tax - discount;
+                    this.paymentInfo.balance = parseFloat(this.paymentInfo.paidAmount || 0) - this.paymentInfo.totalAmount;
+                },
+                
+                async processCloseKitchenOrder() {
+                    if (!this.customerInfo.name || this.paymentInfo.paidAmount <= 0) {
+                        alert('Please fill in customer name and payment amount.');
+                        return;
+                    }
+                    if (!this.orderToClose || !this.orderToClose.id) {
+                        alert('No order found to close.');
+                        return;
+                    }
+                    if (!this.selectedSlotInfo || !this.selectedSlotInfo.slot_number) {
+                        alert('No slot information found.');
+                        return;
+                    }
+                    try {
+                        const requestData = {
+                            order_id: this.orderToClose.id,
+                            slot_number: this.selectedSlotInfo.slot_number,
+                            customer_name: this.customerInfo.name,
+                            customer_phone: this.customerInfo.phone || '',
+                            payment_method: this.paymentInfo.method,
+                            discount_amount: parseFloat(this.paymentInfo.discount || 0),
+                            customer_paid: parseFloat(this.paymentInfo.paidAmount),
+                            balance_returned: Math.max(0, this.paymentInfo.balance),
+                            total_amount: this.paymentInfo.totalAmount
+                        };
+                        const response = await fetch('/api/close-kitchen-order', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify(requestData)
+                        });
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const result = await response.json();
+                        if (result.success) {
+                            alert('Order completed successfully!');
+                            this.showCloseOrderModal = false;
+                            await this.loadSlots();
+                        } else {
+                            alert('Error completing order: ' + result.message);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error completing order: ' + error.message);
+                    }
+                },
+                
+                // Customer suggestions (reuse API)
+                customerSuggestions: [],
+                showCustomerSuggestions: false,
+                async searchCustomers(query) {
+                    if (!query || query.length < 2) {
+                        this.customerSuggestions = [];
+                        this.showCustomerSuggestions = false;
+                        return;
+                    }
+                    try {
+                        const response = await fetch(`/api/customers?q=${encodeURIComponent(query)}`);
+                        const data = await response.json();
+                        this.customerSuggestions = data.customers || [];
+                        this.showCustomerSuggestions = this.customerSuggestions.length > 0;
+                    } catch (error) {
+                        console.error('Error fetching customers:', error);
+                        this.customerSuggestions = [];
+                        this.showCustomerSuggestions = false;
+                    }
+                },
+                selectCustomer(customer) {
+                    this.customerInfo.name = customer.name;
+                    this.customerInfo.phone = customer.phone;
+                    this.customerSuggestions = [];
+                    this.showCustomerSuggestions = false;
+                },
+                addNewCustomer() {
+                    this.customerInfo.name = '';
+                    this.customerInfo.phone = '';
+                    this.customerSuggestions = [];
+                    this.showCustomerSuggestions = false;
                 },
                 
                 confirmSlotSelection() {
@@ -585,7 +947,10 @@
                                     'Content-Type': 'application/json',
                                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                                 },
-                                body: JSON.stringify(this.pendingOrderData)
+                                body: JSON.stringify({
+                                    ...this.pendingOrderData,
+                                    payment_method: 'cash'
+                                })
                             });
                             
                             const createOrderResult = await createOrderResponse.json();
