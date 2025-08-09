@@ -72,7 +72,7 @@ class FoodItemResource extends Resource
                             ->numeric()
                             ->prefix('Rs.')
                             ->step(1)
-                            ->helperText('Static price used for takeaway; dine-in adds 10% on total bill'),
+                            ->helperText('Static item price. Dine-in adds 10% on the order total. Portion prices fall back to this when empty.'),
                     ])
                     ->columns(2),
                 
@@ -98,7 +98,6 @@ class FoodItemResource extends Resource
                             ->schema([
                                 Forms\Components\TextInput::make('full_portion_price')
                                     ->label('Full Portion Price')
-                                    ->required()
                                     ->numeric()
                                     ->prefix('Rs.')
                                     ->step(1),
@@ -135,6 +134,10 @@ class FoodItemResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('price')
+                    ->label('Base Price')
+                    ->formatStateUsing(fn ($state) => $state ? 'Rs. ' . number_format($state, 0) : '-')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('image')
                     ->label('Image')
                     ->html()
