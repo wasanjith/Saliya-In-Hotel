@@ -210,7 +210,6 @@
                                     </div>
                                     <div class="p-3">
                                         <h4 class="font-medium text-gray-800 mb-1" x-text="item.name"></h4>
-                                        <p class="text-sm text-gray-600 mb-2" x-text="item.description"></p>
                                         
                                         <!-- Portion Information -->
                                         <div class="mb-2">
