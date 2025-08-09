@@ -224,6 +224,10 @@
                         <i class="fas fa-chair mr-3"></i>
                         <span>Tables</span>
                     </a>
+                    <a href="/kitchen-slots" class="flex items-center px-4 py-3 text-green-200 hover:bg-green-700 rounded-lg">
+                        <i class="fas fa-utensils mr-3"></i>
+                        <span>Kitchen Slots</span>
+                    </a>
                 </div>
             </nav>
             
