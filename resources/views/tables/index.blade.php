@@ -647,8 +647,8 @@
                             <span class="font-medium">Rs. <span x-text="Math.round(orderToClose?.subtotal || 0)"></span></span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Tax (10%):</span>
-                            <span class="font-medium">Rs. <span x-text="Math.round((orderToClose?.subtotal || 0) * 0.1)"></span></span>
+                            <span class="text-gray-600" x-text="'Tax (' + Math.round((paymentInfo.taxRate || 0) * 100) + '%):'"></span>
+                            <span class="font-medium">Rs. <span x-text="Math.round(paymentInfo.tax || 0)"></span></span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Discount:</span>
@@ -770,7 +770,9 @@
                     discount: 0,
                     paidAmount: 0,
                     totalAmount: 0,
-                    balance: 0
+                    balance: 0,
+                    taxRate: 0,
+                    tax: 0
                 },
                 orderId: null,
                 customerSuggestions: [], // New for customer suggestions
@@ -1055,6 +1057,8 @@
                         
                         // Calculate initial amounts
                         if (this.orderToClose) {
+                            // Apply 10% tax only for dine-in orders
+                            this.paymentInfo.taxRate = (this.orderToClose.order_type === 'dine_in') ? 0.10 : 0;
                             this.paymentInfo.totalAmount = parseFloat(this.orderToClose.total_amount || 0);
                             this.paymentInfo.paidAmount = this.paymentInfo.totalAmount;
                             this.calculatePayment();
@@ -1074,9 +1078,10 @@
                     }
                     
                     const subtotal = parseFloat(this.orderToClose.subtotal || 0);
-                    const tax = subtotal * 0.1;
+                    const tax = subtotal * (this.paymentInfo.taxRate || 0);
                     const discount = parseFloat(this.paymentInfo.discount || 0);
                     
+                    this.paymentInfo.tax = tax;
                     this.paymentInfo.totalAmount = subtotal + tax - discount;
                     this.paymentInfo.balance = parseFloat(this.paymentInfo.paidAmount || 0) - this.paymentInfo.totalAmount;
                 },
@@ -1139,7 +1144,7 @@
                             
                             // Reset form
                             this.customerInfo = { name: '', phone: '' };
-                            this.paymentInfo = { method: 'cash', discount: 0, paidAmount: 0, totalAmount: 0, balance: 0 };
+                            this.paymentInfo = { method: 'cash', discount: 0, paidAmount: 0, totalAmount: 0, balance: 0, taxRate: 0, tax: 0 };
                             
                             // Refresh tables
                             await this.loadTables();

@@ -564,8 +564,8 @@
                             <span class="font-medium">Rs. <span x-text="Math.round(orderToClose?.subtotal || 0)"></span></span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Tax (10%):</span>
-                            <span class="font-medium">Rs. <span x-text="Math.round((orderToClose?.subtotal || 0) * 0.1)"></span></span>
+                            <span class="text-gray-600" x-text="'Tax (' + Math.round((paymentInfo.taxRate || 0) * 100) + '%):'"></span>
+                            <span class="font-medium">Rs. <span x-text="Math.round(paymentInfo.tax || 0)"></span></span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Discount:</span>
@@ -634,7 +634,7 @@
                 orderToClose: null,
                 orderItems: [],
                 customerInfo: { name: '', phone: '' },
-                paymentInfo: { method: 'cash', discount: 0, paidAmount: 0, totalAmount: 0, balance: 0 },
+                paymentInfo: { method: 'cash', discount: 0, paidAmount: 0, totalAmount: 0, balance: 0, taxRate: 0, tax: 0 },
                 
                 async init() {
                     // Get order ID and order type from URL params
@@ -828,7 +828,10 @@
                         }
                         // Initialize payment amounts
                         const subtotal = parseFloat(this.orderToClose.subtotal || 0);
-                        this.paymentInfo.totalAmount = subtotal + subtotal * 0.1 - parseFloat(this.paymentInfo.discount || 0);
+                        // Apply 10% tax only for dine-in; takeaway has 0% tax
+                        this.paymentInfo.taxRate = (this.orderToClose.order_type === 'dine_in') ? 0.10 : 0;
+                        this.paymentInfo.tax = subtotal * (this.paymentInfo.taxRate || 0);
+                        this.paymentInfo.totalAmount = subtotal + this.paymentInfo.tax - parseFloat(this.paymentInfo.discount || 0);
                         this.paymentInfo.paidAmount = this.paymentInfo.totalAmount;
                         this.calculatePayment();
                         this.showCloseOrderModal = true;
@@ -841,8 +844,9 @@
                 calculatePayment() {
                     if (!this.orderToClose) return;
                     const subtotal = parseFloat(this.orderToClose.subtotal || 0);
-                    const tax = subtotal * 0.1;
+                    const tax = subtotal * (this.paymentInfo.taxRate || 0);
                     const discount = parseFloat(this.paymentInfo.discount || 0);
+                    this.paymentInfo.tax = tax;
                     this.paymentInfo.totalAmount = subtotal + tax - discount;
                     this.paymentInfo.balance = parseFloat(this.paymentInfo.paidAmount || 0) - this.paymentInfo.totalAmount;
                 },
