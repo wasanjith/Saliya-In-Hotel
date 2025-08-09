@@ -17,12 +17,9 @@ class FoodItem extends Model
         'slug',
         'description',
         'image',
-        'dine_in_price',
-        'takeaway_price',
-        'full_portion_dine_in_price',
-        'full_portion_takeaway_price',
-        'half_portion_dine_in_price',
-        'half_portion_takeaway_price',
+        'price',
+        'full_portion_price',
+        'half_portion_price',
         'has_half_portion',
         'full_portion_name',
         'half_portion_name',
@@ -32,12 +29,9 @@ class FoodItem extends Model
     ];
 
     protected $casts = [
-        'dine_in_price' => 'decimal:2',
-        'takeaway_price' => 'decimal:2',
-        'full_portion_dine_in_price' => 'decimal:2',
-        'full_portion_takeaway_price' => 'decimal:2',
-        'half_portion_dine_in_price' => 'decimal:2',
-        'half_portion_takeaway_price' => 'decimal:2',
+        'price' => 'decimal:2',
+        'full_portion_price' => 'decimal:2',
+        'half_portion_price' => 'decimal:2',
         'has_half_portion' => 'boolean',
         'is_available' => 'boolean',
         'is_featured' => 'boolean',
@@ -86,18 +80,16 @@ class FoodItem extends Model
             $portion = 'full';
         }
 
-        $priceField = "{$portion}_portion_{$orderType}_price";
-        
-        if (isset($this->$priceField) && $this->$priceField !== null) {
-            return (float) $this->$priceField;
+        // Unified pricing: orderType is ignored at item level; dine-in surcharge is applied to the order total
+        if ($portion === 'half' && $this->half_portion_price !== null) {
+            return (float) $this->half_portion_price;
         }
 
-        // Fallback to original price fields if portion-specific prices are not set
-        if ($orderType === 'dine_in') {
-            return (float) $this->dine_in_price;
-        } else {
-            return (float) $this->takeaway_price;
+        if ($this->full_portion_price !== null) {
+            return (float) $this->full_portion_price;
         }
+
+        return (float) $this->price;
     }
 
     /**

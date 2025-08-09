@@ -20,7 +20,7 @@ class OrderItemFactory extends Factory
     {
         $foodItem = FoodItem::factory()->create();
         $quantity = $this->faker->numberBetween(1, 5);
-        $unitPrice = $foodItem->dine_in_price;
+        $unitPrice = $foodItem->price;
         $totalPrice = $quantity * $unitPrice;
         
         return [

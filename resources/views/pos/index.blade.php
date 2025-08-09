@@ -215,17 +215,17 @@
                                         <div class="mb-2">
                                             <div class="flex justify-between items-center text-sm">
                                                 <span class="text-gray-600">Full:</span>
-                                                <span class="font-medium text-blue-600" x-text="'Rs. ' + Math.round(orderType === 'takeaway' ? (item.full_portion_takeaway_price || item.takeaway_price) : (item.full_portion_dine_in_price || item.dine_in_price))"></span>
+                                                <span class="font-medium text-blue-600" x-text="'Rs. ' + Math.round(item.full_portion_price || item.price)"></span>
                                             </div>
                                             <div x-show="item.has_half_portion" class="flex justify-between items-center text-sm">
                                                 <span class="text-gray-600">Half:</span>
-                                                <span class="font-medium text-green-600" x-text="'Rs. ' + Math.round(orderType === 'takeaway' ? item.half_portion_takeaway_price : item.half_portion_dine_in_price)"></span>
+                                                <span class="font-medium text-green-600" x-text="'Rs. ' + Math.round(item.half_portion_price)"></span>
                                             </div>
                                         </div>
                                         
                                         <div class="flex justify-between items-center">
                                             <div class="flex items-center space-x-2">
-                                                <span class="text-lg font-bold text-blue-600" x-text="'Rs. ' + Math.round(orderType === 'takeaway' ? (item.full_portion_takeaway_price || item.takeaway_price) : (item.full_portion_dine_in_price || item.dine_in_price))"></span>
+                                                <span class="text-lg font-bold text-blue-600" x-text="'Rs. ' + Math.round(item.full_portion_price || item.price)"></span>
                                                 <span x-show="item.has_half_portion" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Half Available</span>
                                             </div>
                                             <button @click.stop="toggleFavorite(item.id)" 
@@ -805,7 +805,7 @@
                         this.showPortionSelection(item);
                     } else {
                         // For items without half portions, add directly with full portion
-                        const price = this.orderType === 'takeaway' ? item.takeaway_price : item.dine_in_price;
+                        const price = item.full_portion_price || item.price;
                         const existingItem = this.orderItems.find(orderItem => orderItem.id === item.id);
                         
                         if (existingItem) {
@@ -836,19 +836,10 @@
                 getPortionPrice(portion) {
                     if (!this.selectedFoodItem) return 0;
                     
-                    const orderType = this.orderType === 'takeaway' ? 'takeaway' : 'dine_in';
-                    const priceField = `${portion}_portion_${orderType}_price`;
-                    
-                    if (this.selectedFoodItem[priceField] && this.selectedFoodItem[priceField] !== null) {
-                        return Math.round(parseFloat(this.selectedFoodItem[priceField]));
+                    if (portion === 'half' && this.selectedFoodItem.half_portion_price) {
+                        return Math.round(parseFloat(this.selectedFoodItem.half_portion_price || 0));
                     }
-                    
-                    // Fallback to legacy pricing
-                    if (orderType === 'takeaway') {
-                        return Math.round(parseFloat(this.selectedFoodItem.takeaway_price || 0));
-                    } else {
-                        return Math.round(parseFloat(this.selectedFoodItem.dine_in_price || 0));
-                    }
+                    return Math.round(parseFloat(this.selectedFoodItem.full_portion_price || this.selectedFoodItem.price || 0));
                 },
                 
                 increasePortionQuantity() {

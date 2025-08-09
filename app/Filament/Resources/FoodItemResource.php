@@ -66,19 +66,13 @@ class FoodItemResource extends Resource
                 
                 Forms\Components\Section::make('Pricing')
                     ->schema([
-                        Forms\Components\TextInput::make('dine_in_price')
-                            ->label('Dine-in Price (Legacy)')
+                        Forms\Components\TextInput::make('price')
+                            ->label('Base Price')
+                            ->required()
                             ->numeric()
                             ->prefix('Rs.')
                             ->step(1)
-                            ->helperText('Legacy field - use portion-specific pricing below'),
-                        
-                        Forms\Components\TextInput::make('takeaway_price')
-                            ->label('Takeaway Price (Legacy)')
-                            ->numeric()
-                            ->prefix('Rs.')
-                            ->step(1)
-                            ->helperText('Legacy field - use portion-specific pricing below'),
+                            ->helperText('Static price used for takeaway; dine-in adds 10% on total bill'),
                     ])
                     ->columns(2),
                 
@@ -102,29 +96,15 @@ class FoodItemResource extends Resource
                         
                         Forms\Components\Grid::make(2)
                             ->schema([
-                                Forms\Components\TextInput::make('full_portion_dine_in_price')
-                                    ->label('Full Portion - Dine-in Price')
+                                Forms\Components\TextInput::make('full_portion_price')
+                                    ->label('Full Portion Price')
                                     ->required()
                                     ->numeric()
                                     ->prefix('Rs.')
                                     ->step(1),
-                                
-                                Forms\Components\TextInput::make('full_portion_takeaway_price')
-                                    ->label('Full Portion - Takeaway Price')
-                                    ->required()
-                                    ->numeric()
-                                    ->prefix('Rs.')
-                                    ->step(1),
-                                
-                                Forms\Components\TextInput::make('half_portion_dine_in_price')
-                                    ->label('Half Portion - Dine-in Price')
-                                    ->numeric()
-                                    ->prefix('Rs.')
-                                    ->step(1)
-                                    ->visible(fn (Forms\Get $get) => $get('has_half_portion')),
-                                
-                                Forms\Components\TextInput::make('half_portion_takeaway_price')
-                                    ->label('Half Portion - Takeaway Price')
+
+                                Forms\Components\TextInput::make('half_portion_price')
+                                    ->label('Half Portion Price')
                                     ->numeric()
                                     ->prefix('Rs.')
                                     ->step(1)
@@ -170,12 +150,12 @@ class FoodItemResource extends Resource
                 Tables\Columns\TextColumn::make('category.name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('full_portion_dine_in_price')
-                    ->label('Full Portion - Dine-in')
+                Tables\Columns\TextColumn::make('full_portion_price')
+                    ->label('Full Portion Price')
                     ->formatStateUsing(fn ($state) => $state ? 'Rs. ' . number_format($state, 0) : '-')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('half_portion_dine_in_price')
-                    ->label('Half Portion - Dine-in')
+                Tables\Columns\TextColumn::make('half_portion_price')
+                    ->label('Half Portion Price')
                     ->formatStateUsing(fn ($state) => $state ? 'Rs. ' . number_format($state, 0) : '-')
                     ->sortable()
                     ->visible(fn ($record) => $record && $record->has_half_portion),

@@ -254,17 +254,12 @@ class TableController extends Controller
                 }
             }
             
-            // Calculate tax amount (10% of subtotal)
-            $taxAmount = $order->subtotal * 0.1;
-            
             // Update order with payment details and customer_id
             $order->update([
                 'customer_id' => $customer->id,
                 'customer_name' => $request->customer_name,
                 'customer_phone' => $request->customer_phone,
                 'payment_method' => $request->payment_method,
-                'tax_amount' => $taxAmount,
-                'discount_amount' => $request->discount_amount ?? 0,
                 'total_amount' => $request->total_amount,
                 'customer_paid' => $request->customer_paid,
                 'balance_returned' => $request->balance_returned ?? 0,

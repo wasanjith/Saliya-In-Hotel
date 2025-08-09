@@ -86,8 +86,6 @@ class POSController extends Controller
                 'customer_name' => $request->customer_name,
                 'customer_phone' => $request->customer_phone,
                 'subtotal' => 0,
-                'tax_amount' => 0,
-                'discount_amount' => $request->discount_amount ?? 0,
                 'total_amount' => 0,
                 'status' => 'pending',
             ]);
@@ -115,7 +113,7 @@ class POSController extends Controller
                 $portion = $item['portion'] ?? 'full';
                 $orderType = $request->order_type === 'takeaway' ? 'takeaway' : 'dine_in';
                 
-                // Get price based on portion and order type
+                // Get price based on portion (order type is ignored at item level)
                 $price = $foodItem->getPrice($portion, $orderType);
                 $totalPrice = $price * $item['quantity'];
 
@@ -157,8 +155,11 @@ class POSController extends Controller
                 'subtotal' => $subtotal
             ]);
 
-            // Calculate total amount
+            // Calculate total amount with dine-in surcharge (10%)
             $totalAmount = $request->total_amount ?? $subtotal;
+            if ($order->order_type === 'dine_in') {
+                $totalAmount = round($subtotal * 1.10, 2);
+            }
 
             $order->update([
                 'subtotal' => $subtotal,
