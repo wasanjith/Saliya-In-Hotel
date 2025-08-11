@@ -18,11 +18,11 @@ class FoodItem extends Model
         'description',
         'image',
         'price',
-        'full_portion_price',
-        'half_portion_price',
+        'full_basmathi_price',
+        'half_basmathi_price',
+        'full_samba_price',
+        'half_samba_price',
         'has_half_portion',
-        'full_portion_name',
-        'half_portion_name',
         'is_available',
         'is_featured',
         'sort_order',
@@ -30,8 +30,10 @@ class FoodItem extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
-        'full_portion_price' => 'decimal:2',
-        'half_portion_price' => 'decimal:2',
+        'full_basmathi_price' => 'decimal:2',
+        'half_basmathi_price' => 'decimal:2',
+        'full_samba_price' => 'decimal:2',
+        'half_samba_price' => 'decimal:2',
         'has_half_portion' => 'boolean',
         'is_available' => 'boolean',
         'is_featured' => 'boolean',
@@ -75,20 +77,8 @@ class FoodItem extends Model
      */
     public function getPrice(string $portion = 'full', string $orderType = 'dine_in'): float
     {
-        if ($portion === 'half' && !$this->has_half_portion) {
-            // If half portion is not available, return full portion price
-            $portion = 'full';
-        }
-
-        // Unified pricing: orderType is ignored at item level; dine-in surcharge is applied to the order total
-        if ($portion === 'half' && $this->half_portion_price !== null) {
-            return (float) $this->half_portion_price;
-        }
-
-        if ($this->full_portion_price !== null) {
-            return (float) $this->full_portion_price;
-        }
-
+        // With unified pricing, portion-level prices are not stored globally.
+        // Return base price; rice-type handling is done via getPriceWithRiceType().
         return (float) $this->price;
     }
 
@@ -97,11 +87,7 @@ class FoodItem extends Model
      */
     public function getPortionName(string $portion = 'full'): string
     {
-        if ($portion === 'half') {
-            return $this->half_portion_name ?? 'Half Portion';
-        }
-        
-        return $this->full_portion_name ?? 'Full Portion';
+        return $portion === 'half' ? 'Half Portion' : 'Full Portion';
     }
 
     /**
@@ -148,5 +134,70 @@ class FoodItem extends Model
         }
         
         return $options;
+    }
+
+    /**
+     * Whether the item belongs to the 'Fried Rice' category
+     */
+    public function isFriedRice(): bool
+    {
+        // Try loaded relation first to avoid extra query
+        if ($this->relationLoaded('category') && $this->category) {
+            return $this->category->name === 'Fried Rice';
+        }
+
+        // Fallback to querying relation when not loaded
+        $category = $this->category()->first();
+        return $category ? $category->name === 'Fried Rice' : false;
+    }
+
+    /**
+     * Get price for a given rice type if applicable (samba|basmathi)
+     */
+    public function getRicePrice(?string $riceType, string $portion = 'full'): ?float
+    {
+        if (!$riceType) {
+            return null;
+        }
+
+        $riceType = strtolower($riceType);
+        $isHalf = $portion === 'half';
+
+        if ($riceType === 'samba') {
+            if ($isHalf && $this->half_samba_price !== null) {
+                return (float) $this->half_samba_price;
+            }
+            if (!$isHalf && $this->full_samba_price !== null) {
+                return (float) $this->full_samba_price;
+            }
+        }
+
+        if ($riceType === 'basmathi' || $riceType === 'basmati') {
+            if ($isHalf && $this->half_basmathi_price !== null) {
+                return (float) $this->half_basmathi_price;
+            }
+            if (!$isHalf && $this->full_basmathi_price !== null) {
+                return (float) $this->full_basmathi_price;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get price considering rice type when relevant; falls back to portion pricing
+     */
+    public function getPriceWithRiceType(string $portion = 'full', ?string $riceType = null, string $orderType = 'dine_in'): float
+    {
+        if ($this->isFriedRice()) {
+            // Respect portion for rice-type prices
+            if ($portion === 'half' && !$this->has_half_portion) {
+                $portion = 'full';
+            }
+            $ricePrice = $this->getRicePrice($riceType, $portion);
+            if ($ricePrice !== null) {
+                return $ricePrice;
+            }
+        }
+        return $this->getPrice($portion, $orderType);
     }
 }

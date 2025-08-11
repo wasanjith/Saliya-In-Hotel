@@ -60,6 +60,7 @@ class POSController extends Controller
             'items.*.food_item_id' => 'required|exists:food_items,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.portion' => 'nullable|in:full,half',
+            'items.*.rice_type' => 'nullable|in:samba,basmathi,basmati',
             'payment_method' => 'required|in:cash,card,gift,other',
             'customer_name' => 'nullable|string|max:255',
             'customer_phone' => 'nullable|string|max:20',
@@ -109,16 +110,24 @@ class POSController extends Controller
                     throw new \Exception("Food item '{$foodItem->name}' is not available");
                 }
                 
-                // Get portion and order type
+                // Get portion, rice type and order type
                 $portion = $item['portion'] ?? 'full';
+                $riceType = $item['rice_type'] ?? null;
                 $orderType = $request->order_type === 'takeaway' ? 'takeaway' : 'dine_in';
                 
-                // Get price based on portion (order type is ignored at item level)
-                $price = $foodItem->getPrice($portion, $orderType);
+                // Get price based on portion and rice type (order type is ignored at item level)
+                $price = method_exists($foodItem, 'getPriceWithRiceType')
+                    ? $foodItem->getPriceWithRiceType($portion, $riceType, $orderType)
+                    : $foodItem->getPrice($portion, $orderType);
                 $totalPrice = $price * $item['quantity'];
 
                 // Create item name with portion
                 $itemName = $foodItem->name;
+                if (method_exists($foodItem, 'isFriedRice') && $foodItem->isFriedRice() && $riceType) {
+                    $label = strtolower($riceType);
+                    $label = $label === 'basmati' ? 'Basmathi' : ucfirst($label);
+                    $itemName .= ' - ' . $label . ' Rice';
+                }
                 if ($portion === 'half' && $foodItem->has_half_portion) {
                     $itemName .= ' (' . $foodItem->getPortionName('half') . ')';
                 } else {
@@ -133,6 +142,7 @@ class POSController extends Controller
                     'unit_price' => floatval($price),
                     'total_price' => floatval($totalPrice),
                     'portion' => $portion,
+                    'rice_type' => $riceType,
                     'notes' => $item['notes'] ?? null,
                 ];
 

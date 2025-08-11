@@ -646,10 +646,12 @@
                             <span class="text-gray-600">Subtotal:</span>
                             <span class="font-medium">Rs. <span x-text="Math.round(orderToClose?.subtotal || 0)"></span></span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600" x-text="'Tax (' + Math.round((paymentInfo.taxRate || 0) * 100) + '%):'"></span>
-                            <span class="font-medium">Rs. <span x-text="Math.round(paymentInfo.tax || 0)"></span></span>
-                        </div>
+                        <template x-if="orderToClose?.order_type === 'dine_in' && (paymentInfo.taxRate || 0) > 0">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600" x-text="'Table Charges (' + Math.round((paymentInfo.taxRate || 0) * 100) + '%):'"></span>
+                                <span class="font-medium">Rs. <span x-text="Math.round(paymentInfo.tax || 0)"></span></span>
+                            </div>
+                        </template>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Discount:</span>
                             <div class="flex items-center space-x-2">

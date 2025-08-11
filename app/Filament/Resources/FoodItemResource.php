@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\FoodItemResource\Pages;
 use App\Filament\Resources\FoodItemResource\RelationManagers;
 use App\Models\FoodItem;
+use App\Models\Category;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -32,7 +33,8 @@ class FoodItemResource extends Resource
                             ->relationship('category', 'name')
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->reactive(),
                         
                         Forms\Components\TextInput::make('name')
                             ->required()
@@ -73,44 +75,49 @@ class FoodItemResource extends Resource
                             ->prefix('Rs.')
                             ->step(1)
                             ->helperText('Static item price. Dine-in adds 10% on the order total. Portion prices fall back to this when empty.'),
+
+                            Forms\Components\Section::make('Portion Settings')
+                            ->schema([
+                                Forms\Components\Toggle::make('has_half_portion')
+                                    ->label('Has Half Portion')
+                                    ->default(false)
+                                    ->reactive(),
+                            ])
+                            ->columns(1),
+                        // Fried Rice specific portion prices
+                        Forms\Components\Fieldset::make('Fried Rice Portion Prices')
+                            ->visible(fn (Forms\Get $get) => (Category::find($get('category_id'))?->name) === 'Fried Rice')
+                            ->schema([
+                                Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('full_samba_price')
+                                            ->label('Samba Full Price')
+                                            ->numeric()
+                                            ->prefix('Rs.')
+                                            ->step(1),
+                                        Forms\Components\TextInput::make('half_samba_price')
+                                            ->label('Samba Half Price')
+                                            ->numeric()
+                                            ->prefix('Rs.')
+                                            ->step(1)
+                                            ->visible(fn (Forms\Get $get) => $get('has_half_portion')),
+                                        Forms\Components\TextInput::make('full_basmathi_price')
+                                            ->label('Basmathi Full Price')
+                                            ->numeric()
+                                            ->prefix('Rs.')
+                                            ->step(1),
+                                        Forms\Components\TextInput::make('half_basmathi_price')
+                                            ->label('Basmathi Half Price')
+                                            ->numeric()
+                                            ->prefix('Rs.')
+                                            ->step(1)
+                                            ->visible(fn (Forms\Get $get) => $get('has_half_portion')),
+                                    ]),
+                            ]),
                     ])
                     ->columns(2),
                 
-                Forms\Components\Section::make('Portion Pricing')
-                    ->schema([
-                        Forms\Components\Toggle::make('has_half_portion')
-                            ->label('Has Half Portion')
-                            ->default(false)
-                            ->reactive(),
-                        
-                        Forms\Components\TextInput::make('full_portion_name')
-                            ->label('Full Portion Name')
-                            ->default('Full Portion')
-                            ->maxLength(255),
-                        
-                        Forms\Components\TextInput::make('half_portion_name')
-                            ->label('Half Portion Name')
-                            ->default('Half Portion')
-                            ->maxLength(255)
-                            ->visible(fn (Forms\Get $get) => $get('has_half_portion')),
-                        
-                        Forms\Components\Grid::make(2)
-                            ->schema([
-                                Forms\Components\TextInput::make('full_portion_price')
-                                    ->label('Full Portion Price')
-                                    ->numeric()
-                                    ->prefix('Rs.')
-                                    ->step(1),
-
-                                Forms\Components\TextInput::make('half_portion_price')
-                                    ->label('Half Portion Price')
-                                    ->numeric()
-                                    ->prefix('Rs.')
-                                    ->step(1)
-                                    ->visible(fn (Forms\Get $get) => $get('has_half_portion')),
-                            ]),
-                    ])
-                    ->columns(1),
+                
                 
                 Forms\Components\Section::make('Settings')
                     ->schema([
@@ -153,15 +160,27 @@ class FoodItemResource extends Resource
                 Tables\Columns\TextColumn::make('category.name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('full_portion_price')
-                    ->label('Full Portion Price')
+                // Fried Rice specific table columns
+                Tables\Columns\TextColumn::make('full_samba_price')
+                    ->label('Samba Full')
                     ->formatStateUsing(fn ($state) => $state ? 'Rs. ' . number_format($state, 0) : '-')
+                    ->visible(fn ($record) => $record && $record->category && $record->category->name === 'Fried Rice')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('half_portion_price')
-                    ->label('Half Portion Price')
+                Tables\Columns\TextColumn::make('half_samba_price')
+                    ->label('Samba Half')
                     ->formatStateUsing(fn ($state) => $state ? 'Rs. ' . number_format($state, 0) : '-')
-                    ->sortable()
-                    ->visible(fn ($record) => $record && $record->has_half_portion),
+                    ->visible(fn ($record) => $record && $record->category && $record->category->name === 'Fried Rice' && $record->has_half_portion)
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('full_basmathi_price')
+                    ->label('Basmathi Full')
+                    ->formatStateUsing(fn ($state) => $state ? 'Rs. ' . number_format($state, 0) : '-')
+                    ->visible(fn ($record) => $record && $record->category && $record->category->name === 'Fried Rice')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('half_basmathi_price')
+                    ->label('Basmathi Half')
+                    ->formatStateUsing(fn ($state) => $state ? 'Rs. ' . number_format($state, 0) : '-')
+                    ->visible(fn ($record) => $record && $record->category && $record->category->name === 'Fried Rice' && $record->has_half_portion)
+                    ->sortable(),
                 Tables\Columns\IconColumn::make('has_half_portion')
                     ->label('Half Portion')
                     ->boolean()

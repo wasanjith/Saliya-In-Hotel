@@ -474,6 +474,9 @@
                             <div class="flex justify-between items-center py-2 border-b border-gray-100">
                                 <div class="flex-1">
                                     <span class="font-medium" x-text="item.item_name"></span>
+                                    <template x-if="item.rice_type">
+                                        <span class="text-xs text-amber-700 ml-2" x-text="(item.rice_type === 'samba' ? 'Samba' : 'Basmathi') + ' Rice'"></span>
+                                    </template>
                                     <span class="text-gray-500 text-sm ml-2">x<span x-text="item.quantity"></span></span>
                                 </div>
                                 <div class="text-right">

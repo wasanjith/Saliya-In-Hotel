@@ -50,12 +50,7 @@ return new class extends Migration
             if (Schema::hasColumn('food_items', 'half_portion_takeaway_price')) {
                 $table->dropColumn('half_portion_takeaway_price');
             }
-            if (Schema::hasColumn('food_items', 'samba_rice_price')) {
-                $table->dropColumn('samba_rice_price');
-            }
-            if (Schema::hasColumn('food_items', 'basmathi_rice_price')) {
-                $table->dropColumn('basmathi_rice_price');
-            }
+            
         });
     }
 
@@ -72,8 +67,7 @@ return new class extends Migration
             $table->decimal('full_portion_takeaway_price', 10, 2)->nullable()->after('full_portion_dine_in_price');
             $table->decimal('half_portion_dine_in_price', 10, 2)->nullable()->after('full_portion_takeaway_price');
             $table->decimal('half_portion_takeaway_price', 10, 2)->nullable()->after('half_portion_dine_in_price');
-            $table->decimal('samba_rice_price', 10, 2)->nullable()->after('half_portion_takeaway_price');
-            $table->decimal('basmathi_rice_price', 10, 2)->nullable()->after('samba_rice_price');
+            
         });
 
         // Best-effort data restoration: map back from unified fields
