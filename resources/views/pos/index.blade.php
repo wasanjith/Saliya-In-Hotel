@@ -76,6 +76,32 @@
         body {
             overflow-x: hidden;
         }
+        
+        /* Rice selection modal improvements */
+        .rice-option-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .rice-option-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background-color: #f8fafc;
+            border-color: #3b82f6;
+        }
+        
+        .rice-option-card:active {
+            transform: translateY(0);
+            background-color: #e2e8f0;
+        }
+        
+        .rice-quantity-controls {
+            transition: all 0.2s ease;
+        }
+        
+        .rice-quantity-controls button:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body class="bg-gray-100" x-data="posSystem()">
@@ -230,15 +256,30 @@
                                         <h4 class="font-medium text-gray-800 mb-1" x-text="item.name"></h4>
                                         
                                         <!-- Portion Information -->
-                                            <div class="mb-2">
-                                                <template x-if="!item.has_half_portion && !(item.category && (item.category.name === 'Fried Rice' || item.category.name === 'Kottu'))">
-                                                    <div class="flex justify-between items-center text-sm">
+                                        <div class="mb-2">
+                                            <!-- Regular items with half portion available -->
+                                            <template x-if="item.has_half_portion && !(item.category && item.category.name === 'Fried Rice')">
+                                                <div class="space-y-1 text-sm">
+                                                    <div class="flex justify-between items-center">
                                                         <span class="text-gray-600">Full:</span>
                                                         <span class="font-medium text-blue-600" x-text="'Rs. ' + Math.round(item.price || 0)"></span>
                                                     </div>
-                                                </template>
-                                            <!-- Half line removed since specific half price is no longer stored globally -->
-                                            <!-- Rice type prices for Fried Rice (single row) -->
+                                                    <div class="flex justify-between items-center">
+                                                        <span class="text-gray-600">Half:</span>
+                                                        <span class="font-medium text-blue-600" x-text="'Rs. ' + Math.round(item.half_price || 0)"></span>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            
+                                            <!-- Regular items without half portion -->
+                                            <template x-if="!item.has_half_portion && !(item.category && (item.category.name === 'Fried Rice' || item.category.name === 'Kottu'))">
+                                                <div class="flex justify-between items-center text-sm">
+                                                    <span class="text-gray-600">Price:</span>
+                                                    <span class="font-medium text-blue-600" x-text="'Rs. ' + Math.round(item.price || 0)"></span>
+                                                </div>
+                                            </template>
+                                            
+                                            <!-- Rice type prices for Fried Rice -->
                                             <template x-if="item.category && item.category.name === 'Fried Rice'">
                                                 <div class="mt-2 text-xs text-gray-700">
                                                     <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -265,16 +306,31 @@
                                         
                                             <div class="flex justify-between items-center">
                                                 <div class="flex items-center space-x-2">
+                                                    <!-- Show main price for items without half portion -->
                                                     <template x-if="!item.has_half_portion">
                                                         <span class="text-lg font-bold text-blue-600" x-text="'Rs. ' + Math.round(item.price || 0)"></span>
                                                     </template>
+                                                    <!-- Show "From Rs." for items with half portion -->
+                                                    <template x-if="item.has_half_portion && !(item.category && item.category.name === 'Fried Rice')">
+                                                        <div class="text-sm text-gray-600">
+                                                            <span>From </span>
+                                                            <span class="text-lg font-bold text-blue-600" x-text="'Rs. ' + Math.round(item.half_price || 0)"></span>
+                                                        </div>
+                                                    </template>
+                                                    <!-- Show "From Rs." for Fried Rice items -->
+                                                    <template x-if="item.category && item.category.name === 'Fried Rice'">
+                                                        <div class="text-sm text-gray-600">
+                                                            <span>From </span>
+                                                            <span class="text-lg font-bold text-amber-700" x-text="'Rs. ' + Math.round(getLowestRicePrice(item))"></span>
+                                                        </div>
+                                                    </template>
                                                 </div>
-                                            <button @click.stop="toggleFavorite(item.id)" 
-                                                    :class="isFavorite(item.id) ? 'text-yellow-500' : 'text-gray-400'"
-                                                    class="hover:text-yellow-500">
-                                                <i class="fas fa-star"></i>
-                                            </button>
-                                        </div>
+                                                <button @click.stop="toggleFavorite(item.id)" 
+                                                        :class="isFavorite(item.id) ? 'text-yellow-500' : 'text-gray-400'"
+                                                        class="hover:text-yellow-500">
+                                                    <i class="fas fa-star"></i>
+                                                </button>
+                                            </div>
                                     </div>
                                 </div>
                             </template>
@@ -730,7 +786,7 @@
         </div>
     </div>
 
-    <!-- Rice Type Selection Modal -->
+    <!-- Rice Selection Modal -->
     <div x-show="showRiceTypeModal" 
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0"
@@ -746,11 +802,11 @@
              x-transition:leave="transition ease-in duration-200"
              x-transition:leave-start="opacity-100 transform scale-100"
              x-transition:leave-end="opacity-0 transform scale-95"
-             class="bg-white rounded-lg p-6 max-w-md w-full mx-4 my-8 max-h-screen overflow-y-auto">
+             class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 my-8 max-h-screen overflow-y-auto">
             
             <div class="mb-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-xl font-bold text-gray-900">Select Rice Type</h3>
+                    <h3 class="text-xl font-bold text-gray-900">Select Rice Items</h3>
                     <button @click="showRiceTypeModal = false" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times text-xl"></i>
                     </button>
@@ -774,31 +830,166 @@
                     </div>
                 </div>
 
-                <!-- Rice Options -->
-                <div class="grid grid-cols-1 gap-3">
-                    <button class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 text-left"
-                            @click="selectRiceType('samba')">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="font-medium text-gray-900">Samba Rice</div>
-                                <div class="text-sm text-gray-600">Standard rice option</div>
+                <!-- Rice Options Grid -->
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600 text-center mb-3">
+                        <i class="fas fa-mouse-pointer mr-1"></i>
+                        Click anywhere on a card to add that item
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <!-- Samba Rice Options -->
+                    <div class="space-y-3">
+                        <h5 class="font-semibold text-gray-800 text-center pb-2 border-b border-gray-200">Samba Rice</h5>
+                        
+                        <!-- Samba Full Portion -->
+                        <div class="border border-gray-200 rounded-lg p-4 rice-option-card cursor-pointer" 
+                             @click="increaseRiceQuantity('samba', 'full')">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <div class="font-medium text-gray-900">Full Portion</div>
+                                    <div class="text-sm text-gray-600">Complete serving size</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-amber-700">Rs. <span x-text="Math.round(selectedFoodItem.full_samba_price || 0)"></span></div>
+                                </div>
                             </div>
-                            <div class="text-right">
-                                <div class="font-bold text-amber-700">Rs. <span x-text="getRicePriceForDisplay('samba')"></span></div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2 rice-quantity-controls">
+                                    <button @click.stop="decreaseRiceQuantity('samba', 'full')" 
+                                            class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
+                                        <i class="fas fa-minus text-xs"></i>
+                                    </button>
+                                    <span class="w-12 text-center font-medium" x-text="getRiceQuantity('samba', 'full')"></span>
+                                    <button @click.stop="increaseRiceQuantity('samba', 'full')" 
+                                            class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
+                                        <i class="fas fa-plus text-xs"></i>
+                                    </button>
+                                </div>
+                                <span class="text-sm text-gray-600">Total: Rs. <span x-text="Math.round((selectedFoodItem.full_samba_price || 0) * getRiceQuantity('samba', 'full'))"></span></span>
                             </div>
                         </div>
+
+                        <!-- Samba Half Portion (if available) -->
+                        <div x-show="selectedFoodItem && selectedFoodItem.has_half_portion" 
+                             class="border border-gray-200 rounded-lg p-4 rice-option-card cursor-pointer"
+                             @click="increaseRiceQuantity('samba', 'half')">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <div class="font-medium text-gray-900">Half Portion</div>
+                                    <div class="text-sm text-gray-600">Half serving size</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-amber-700">Rs. <span x-text="Math.round(selectedFoodItem.half_samba_price || 0)"></span></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2 rice-quantity-controls">
+                                    <button @click.stop="decreaseRiceQuantity('samba', 'half')" 
+                                            class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
+                                        <i class="fas fa-minus text-xs"></i>
+                                    </button>
+                                    <span class="w-12 text-center font-medium" x-text="getRiceQuantity('samba', 'half')"></span>
+                                    <button @click.stop="increaseRiceQuantity('samba', 'half')" 
+                                            class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
+                                        <i class="fas fa-plus text-xs"></i>
+                                    </button>
+                                </div>
+                                <span class="text-sm text-gray-600">Total: Rs. <span x-text="Math.round((selectedFoodItem.half_samba_price || 0) * getRiceQuantity('samba', 'half'))"></span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Basmathi Rice Options -->
+                    <div class="space-y-3">
+                        <h5 class="font-semibold text-gray-800 text-center pb-2 border-b border-gray-200">Basmathi Rice</h5>
+                        
+                        <!-- Basmathi Full Portion -->
+                        <div class="border border-gray-200 rounded-lg p-4 rice-option-card cursor-pointer"
+                             @click="increaseRiceQuantity('basmathi', 'full')">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <div class="font-medium text-gray-900">Full Portion</div>
+                                    <div class="text-sm text-gray-600">Complete serving size</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-amber-700">Rs. <span x-text="Math.round(selectedFoodItem.full_basmathi_price || 0)"></span></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2 rice-quantity-controls">
+                                    <button @click.stop="decreaseRiceQuantity('basmathi', 'full')" 
+                                            class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
+                                        <i class="fas fa-minus text-xs"></i>
+                                    </button>
+                                    <span class="w-12 text-center font-medium" x-text="getRiceQuantity('basmathi', 'full')"></span>
+                                    <button @click.stop="increaseRiceQuantity('basmathi', 'full')" 
+                                            class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
+                                        <i class="fas fa-plus text-xs"></i>
+                                    </button>
+                                </div>
+                                <span class="text-sm text-gray-600">Total: Rs. <span x-text="Math.round((selectedFoodItem.full_basmathi_price || 0) * getRiceQuantity('basmathi', 'full'))"></span></span>
+                            </div>
+                        </div>
+
+                        <!-- Basmathi Half Portion (if available) -->
+                        <div x-show="selectedFoodItem && selectedFoodItem.has_half_portion" 
+                             class="border border-gray-200 rounded-lg p-4 rice-option-card cursor-pointer"
+                             @click="increaseRiceQuantity('basmathi', 'half')">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <div class="font-medium text-gray-900">Half Portion</div>
+                                    <div class="text-sm text-gray-600">Half serving size</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-amber-700">Rs. <span x-text="Math.round(selectedFoodItem.half_basmathi_price || 0)"></span></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2 rice-quantity-controls">
+                                    <button @click.stop="decreaseRiceQuantity('basmathi', 'half')" 
+                                            class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
+                                        <i class="fas fa-minus text-xs"></i>
+                                    </button>
+                                    <span class="w-12 text-center font-medium" x-text="getRiceQuantity('basmathi', 'half')"></span>
+                                    <button @click.stop="increaseRiceQuantity('basmathi', 'half')" 
+                                            class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
+                                        <i class="fas fa-plus text-xs"></i>
+                                    </button>
+                                </div>
+                                <span class="text-sm text-gray-600">Total: Rs. <span x-text="Math.round((selectedFoodItem.half_basmathi_price || 0) * getRiceQuantity('basmathi', 'half'))"></span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Summary -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <h5 class="font-semibold text-blue-800 mb-2">Order Summary</h5>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-blue-700">Total Items:</span>
+                            <span class="font-medium text-blue-800" x-text="getTotalRiceItems()"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-blue-700">Total Amount:</span>
+                            <span class="font-bold text-blue-800 text-lg">Rs. <span x-text="Math.round(getTotalRiceAmount())"></span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-3">
+                    <button @click="showRiceTypeModal = false" 
+                            class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 px-4 rounded-lg font-medium">
+                        Cancel
                     </button>
-                    <button class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 text-left"
-                            @click="selectRiceType('basmathi')">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="font-medium text-gray-900">Basmathi Rice</div>
-                                <div class="text-sm text-gray-600">Premium rice option</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-bold text-amber-700">Rs. <span x-text="getRicePriceForDisplay('basmathi')"></span></div>
-                            </div>
-                        </div>
+                    <button @click="addAllRiceItemsToOrder()" 
+                            :disabled="getTotalRiceItems() === 0"
+                            :class="getTotalRiceItems() === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'"
+                            class="flex-1 text-white py-3 px-4 rounded-lg font-medium">
+                        <i class="fas fa-plus mr-2"></i>
+                        Add to Order
                     </button>
                 </div>
             </div>
@@ -864,6 +1055,10 @@
                 selectedPortion: 'full',
                 selectedRiceType: null, // 'samba' | 'basmathi'
                 portionQuantity: 1,
+                riceQuantities: {
+                    samba: { full: 0, half: 0 },
+                    basmathi: { full: 0, half: 0 }
+                },
                 takeawayCustomerInfo: {
                     name: '',
                     phone: ''
@@ -960,71 +1155,119 @@
                 },
                 showRiceSelection(item) {
                     this.selectedFoodItem = item;
-                    this.selectedRiceType = null;
-                    this.portionQuantity = 1;
+                    this.resetRiceQuantities();
                     this.showRiceTypeModal = true;
                 },
-                selectRiceType(type) {
-                    this.selectedRiceType = type; // 'samba' | 'basmathi'
-                    // If item has half portion, go to portion selection modal
-                    if (this.selectedFoodItem && this.selectedFoodItem.has_half_portion) {
-                        this.showRiceTypeModal = false;
-                        this.showPortionSelection(this.selectedFoodItem);
-                    } else {
-                        // Add directly with full portion
-                        this.addToOrderWithRice();
+                resetRiceQuantities() {
+                    this.riceQuantities = {
+                        samba: { full: 0, half: 0 },
+                        basmathi: { full: 0, half: 0 }
+                    };
+                },
+                increaseRiceQuantity(riceType, portion) {
+                    this.riceQuantities[riceType][portion]++;
+                },
+                decreaseRiceQuantity(riceType, portion) {
+                    if (this.riceQuantities[riceType][portion] > 0) {
+                        this.riceQuantities[riceType][portion]--;
                     }
                 },
-                getRicePrice(item) {
-                    if (!item || !this.selectedRiceType) return 0;
-                    const isHalf = this.selectedPortion === 'half' && (item.has_half_portion === true);
-                    if (this.selectedRiceType === 'samba') {
-                        const value = isHalf ? item.half_samba_price : item.full_samba_price;
-                        return Math.round(parseFloat(value || 0));
-                    }
-                    const value = isHalf ? item.half_basmathi_price : item.full_basmathi_price;
-                    return Math.round(parseFloat(value || 0));
+                getRiceQuantity(riceType, portion) {
+                    return this.riceQuantities[riceType][portion] || 0;
                 },
-
-                getRicePriceForDisplay(type) {
+                getTotalRiceItems() {
+                    let total = 0;
+                    Object.values(this.riceQuantities).forEach(portions => {
+                        Object.values(portions).forEach(qty => {
+                            total += qty;
+                        });
+                    });
+                    return total;
+                },
+                getTotalRiceAmount() {
                     if (!this.selectedFoodItem) return 0;
-                    const isHalf = this.selectedPortion === 'half' && (this.selectedFoodItem.has_half_portion === true);
-                    if (type === 'samba') {
-                        const v = isHalf ? this.selectedFoodItem.half_samba_price : this.selectedFoodItem.full_samba_price;
-                        return Math.round(parseFloat(v || 0));
-                    }
-                    const v = isHalf ? this.selectedFoodItem.half_basmathi_price : this.selectedFoodItem.full_basmathi_price;
-                    return Math.round(parseFloat(v || 0));
+                    let total = 0;
+                    
+                    // Samba rice totals
+                    total += (this.selectedFoodItem.full_samba_price || 0) * this.riceQuantities.samba.full;
+                    total += (this.selectedFoodItem.half_samba_price || 0) * this.riceQuantities.samba.half;
+                    
+                    // Basmathi rice totals
+                    total += (this.selectedFoodItem.full_basmathi_price || 0) * this.riceQuantities.basmathi.full;
+                    total += (this.selectedFoodItem.half_basmathi_price || 0) * this.riceQuantities.basmathi.half;
+                    
+                    return total;
                 },
-                addToOrderWithRice() {
-                    if (!this.selectedFoodItem || !this.selectedRiceType) return;
-                    const price = this.getRicePrice(this.selectedFoodItem);
-                    const riceLabel = this.selectedRiceType === 'samba' ? 'Samba' : 'Basmathi';
-                    const itemName = `${this.selectedFoodItem.name} - ${riceLabel} Rice (Full Portion)`;
-
+                
+                getLowestRicePrice(item) {
+                    if (!item || !item.category || item.category.name !== 'Fried Rice') return 0;
+                    
+                    const prices = [];
+                    
+                    // Add all available prices to the array
+                    if (item.full_samba_price) prices.push(parseFloat(item.full_samba_price));
+                    if (item.half_samba_price && item.has_half_portion) prices.push(parseFloat(item.half_samba_price));
+                    if (item.full_basmathi_price) prices.push(parseFloat(item.full_basmathi_price));
+                    if (item.half_basmathi_price && item.has_half_portion) prices.push(parseFloat(item.half_basmathi_price));
+                    
+                    // Return the lowest price, or 0 if no prices available
+                    return prices.length > 0 ? Math.min(...prices) : 0;
+                },
+                addAllRiceItemsToOrder() {
+                    if (!this.selectedFoodItem) return;
+                    
+                    // Add Samba rice items
+                    if (this.riceQuantities.samba.full > 0) {
+                        this.addRiceItemToOrder('samba', 'full', this.riceQuantities.samba.full);
+                    }
+                    if (this.riceQuantities.samba.half > 0) {
+                        this.addRiceItemToOrder('samba', 'half', this.riceQuantities.samba.half);
+                    }
+                    
+                    // Add Basmathi rice items
+                    if (this.riceQuantities.basmathi.full > 0) {
+                        this.addRiceItemToOrder('basmathi', 'full', this.riceQuantities.basmathi.full);
+                    }
+                    if (this.riceQuantities.basmathi.half > 0) {
+                        this.addRiceItemToOrder('basmathi', 'half', this.riceQuantities.basmathi.half);
+                    }
+                    
+                    // Close modal and reset
+                    this.showRiceTypeModal = false;
+                    this.selectedFoodItem = null;
+                    this.resetRiceQuantities();
+                },
+                addRiceItemToOrder(riceType, portion, quantity) {
+                    if (!this.selectedFoodItem || quantity <= 0) return;
+                    
+                    let price = 0;
+                    let itemName = '';
+                    
+                    if (riceType === 'samba') {
+                        price = portion === 'half' ? this.selectedFoodItem.half_samba_price : this.selectedFoodItem.full_samba_price;
+                        itemName = `${this.selectedFoodItem.name} - Samba Rice (${portion === 'half' ? 'Half' : 'Full'} Portion)`;
+                    } else {
+                        price = portion === 'half' ? this.selectedFoodItem.half_basmathi_price : this.selectedFoodItem.full_basmathi_price;
+                        itemName = `${this.selectedFoodItem.name} - Basmathi Rice (${portion === 'half' ? 'Half' : 'Full'} Portion)`;
+                    }
+                    
+                    // Check if item with same name already exists
                     const existingItem = this.orderItems.find(orderItem => 
-                        orderItem.id === this.selectedFoodItem.id && 
-                        orderItem.portion === 'full' &&
-                        orderItem.rice_type === this.selectedRiceType
+                        orderItem.name === itemName
                     );
                     
                     if (existingItem) {
-                        existingItem.quantity += this.portionQuantity;
+                        existingItem.quantity += quantity;
                     } else {
                         this.orderItems.push({
                             id: this.selectedFoodItem.id,
                             name: itemName,
-                            price: price,
-                            quantity: this.portionQuantity,
-                            portion: 'full',
-                            rice_type: this.selectedRiceType
+                            price: Math.round(parseFloat(price || 0)),
+                            quantity: quantity,
+                            portion: portion,
+                            rice_type: riceType
                         });
                     }
-                    
-                    this.showRiceTypeModal = false;
-                    this.selectedFoodItem = null;
-                    this.selectedRiceType = null;
-                    this.portionQuantity = 1;
                 },
                 
                 selectPortion(portion) {
