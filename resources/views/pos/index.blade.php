@@ -58,6 +58,24 @@
         .customer-suggestion-item:active {
             background-color: #e5e7eb;
         }
+        
+        /* Responsive layout fixes */
+        @media (max-width: 1400px) {
+            .food-items-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+        
+        /* Ensure content doesn't overflow */
+        .main-content-wrapper {
+            min-width: 0;
+            overflow-x: hidden;
+        }
+        
+        /* Prevent horizontal scrollbar */
+        body {
+            overflow-x: hidden;
+        }
     </style>
 </head>
 <body class="bg-gray-100" x-data="posSystem()">
@@ -116,7 +134,7 @@
         </div>
         
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col ml-64 h-screen">
+        <div class="flex-1 flex flex-col ml-64 h-screen min-w-0 main-content-wrapper">
             <!-- Top Header -->
             <header class="bg-white shadow-sm border-b flex-shrink-0">
                 <div class="flex items-center justify-between px-6 py-4">
@@ -149,9 +167,9 @@
             </header>
             
             <!-- Main Content Area -->
-            <div class="flex-1 flex overflow-hidden">
+            <div class="flex-1 flex overflow-hidden min-w-0">
                 <!-- Left Content - Menu -->
-                <div class="flex-1 p-4 overflow-y-auto">
+                <div class="flex-1 p-4 overflow-y-auto min-w-0">
                     <!-- Categories -->
                     <div class="mb-6">
                         <h3 class="text-lg font-semibold mb-4">Choose Category</h3>
@@ -265,7 +283,7 @@
                 </div>
                 
                 <!-- Right Sidebar - Order -->
-                <div class="w-96 bg-white border-l border-gray-200 flex flex-col h-full">
+                <div class="w-96 bg-white border-l border-gray-200 flex flex-col h-full flex-shrink-0">
                     <!-- 1. Top Order Item Header -->
                     <div class="p-3 border-b border-gray-200 bg-gray-50 flex-shrink-0">
                         <div class="flex items-center justify-between">

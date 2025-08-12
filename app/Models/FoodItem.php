@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
+
+
 
 class FoodItem extends Model
 {
@@ -18,6 +21,8 @@ class FoodItem extends Model
         'description',
         'image',
         'price',
+        'full_price', // New column
+        'half_price', // New column
         'full_basmathi_price',
         'half_basmathi_price',
         'full_samba_price',
@@ -30,6 +35,8 @@ class FoodItem extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'full_price' => 'decimal:2', // New column
+        'half_price' => 'decimal:2', // New column
         'full_basmathi_price' => 'decimal:2',
         'half_basmathi_price' => 'decimal:2',
         'full_samba_price' => 'decimal:2',
@@ -46,7 +53,7 @@ class FoodItem extends Model
         static::saving(function ($foodItem) {
             // Auto-generate slug if not provided
             if (empty($foodItem->slug)) {
-                $foodItem->slug = \Str::slug($foodItem->name);
+                $foodItem->slug = Str::slug($foodItem->name);
             }
         });
     }
@@ -77,8 +84,16 @@ class FoodItem extends Model
      */
     public function getPrice(string $portion = 'full', string $orderType = 'dine_in'): float
     {
-        // With unified pricing, portion-level prices are not stored globally.
-        // Return base price; rice-type handling is done via getPriceWithRiceType().
+        // Use the new specific portion price fields if available
+        if ($portion === 'half' && $this->half_price !== null) {
+            return (float) $this->half_price;
+        }
+        
+        if ($portion === 'full' && $this->full_price !== null) {
+            return (float) $this->full_price;
+        }
+        
+        // Fall back to the base price
         return (float) $this->price;
     }
 
