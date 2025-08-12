@@ -477,6 +477,9 @@
                                     <template x-if="item.rice_type">
                                         <span class="text-xs text-amber-700 ml-2" x-text="(item.rice_type === 'samba' ? 'Samba' : 'Basmathi') + ' Rice'"></span>
                                     </template>
+                                    <template x-if="item.beverage_size">
+                                        <span class="text-xs text-blue-700 ml-2" x-text="item.beverage_size"></span>
+                                    </template>
                                     <span class="text-gray-500 text-sm ml-2">x<span x-text="item.quantity"></span></span>
                                 </div>
                                 <div class="text-right">

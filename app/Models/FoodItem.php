@@ -28,6 +28,8 @@ class FoodItem extends Model
         'full_samba_price',
         'half_samba_price',
         'has_half_portion',
+        'beverage_prices', // New JSON column for drink sizes
+        'has_drink_sizes', // New boolean for drink items
         'is_available',
         'is_featured',
         'sort_order',
@@ -42,6 +44,8 @@ class FoodItem extends Model
         'full_samba_price' => 'decimal:2',
         'half_samba_price' => 'decimal:2',
         'has_half_portion' => 'boolean',
+        'beverage_prices' => 'array', // New JSON column
+        'has_drink_sizes' => 'boolean', // New boolean
         'is_available' => 'boolean',
         'is_featured' => 'boolean',
     ];
@@ -214,5 +218,82 @@ class FoodItem extends Model
             }
         }
         return $this->getPrice($portion, $orderType);
+    }
+
+    /**
+     * Check if the item belongs to the 'Drinks' category
+     */
+    public function isBeverage(): bool
+    {
+        // Try loaded relation first to avoid extra query
+        if ($this->relationLoaded('category') && $this->category) {
+            return $this->category->name === 'Drinks';
+        }
+
+        // Fallback to querying relation when not loaded
+        $category = $this->category()->first();
+        return $category ? $category->name === 'Drinks' : false;
+    }
+
+    /**
+     * Get beverage price for a specific size
+     */
+    public function getBeveragePrice(?string $size): ?float
+    {
+        if (!$this->has_drink_sizes || !$this->beverage_prices) {
+            return null;
+        }
+
+        $size = strtolower($size);
+        return $this->beverage_prices[$size] ?? null;
+    }
+
+    /**
+     * Get all available beverage sizes and prices
+     */
+    public function getBeverageSizes(): array
+    {
+        if (!$this->has_drink_sizes || !$this->beverage_prices) {
+            return [];
+        }
+
+        return $this->beverage_prices;
+    }
+
+    /**
+     * Get beverage size options with prices
+     */
+    public function getBeverageSizeOptions(): array
+    {
+        if (!$this->has_drink_sizes || !$this->beverage_prices) {
+            return [];
+        }
+
+        $options = [];
+        foreach ($this->beverage_prices as $size => $price) {
+            $options[$size] = [
+                'name' => $size,
+                'price' => (float) $price,
+            ];
+        }
+
+        return $options;
+    }
+
+    /**
+     * Get price considering beverage sizes when relevant
+     */
+    public function getPriceWithBeverageSize(?string $size = null, string $portion = 'full', ?string $riceType = null, string $orderType = 'dine_in'): float
+    {
+        // If it's a beverage with sizes, use beverage pricing
+        if ($this->isBeverage() && $this->has_drink_sizes && $size) {
+            $beveragePrice = $this->getBeveragePrice($size);
+            if ($beveragePrice !== null) {
+                return $beveragePrice;
+            }
+        }
+
+        // Fall back to regular pricing logic
+        return $this->getPriceWithRiceType($portion, $riceType, $orderType);
     }
 }

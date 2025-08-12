@@ -64,6 +64,7 @@ class OrderController extends Controller
                                 'notes' => $item['notes'] ?? null,
                                 'portion' => $item['portion'] ?? 'full',
                                 'rice_type' => $item['rice_type'] ?? null,
+                                'beverage_size' => $item['beverage_size'] ?? null, // Include beverage size
                             ];
                         }
                     }

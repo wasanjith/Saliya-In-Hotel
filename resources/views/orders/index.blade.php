@@ -199,7 +199,12 @@
                                                         foreach($orderItem->items as $item) {
                                                             $totalItems += $item['quantity'] ?? 0;
                                                             if (count($itemNames) < 2) {
-                                                                $itemNames[] = $item['item_name'] ?? 'Unknown Item';
+                                                                $itemName = $item['item_name'] ?? 'Unknown Item';
+                                                                // Add beverage size if available
+                                                                if (isset($item['beverage_size']) && $item['beverage_size']) {
+                                                                    $itemName .= ' (' . $item['beverage_size'] . ')';
+                                                                }
+                                                                $itemNames[] = $itemName;
                                                             }
                                                         }
                                                     }
@@ -353,7 +358,12 @@
                         orderItem.items.forEach(item => {
                             totalItems += item.quantity || 0;
                             if (itemNames.length < 2) {
-                                itemNames.push(item.item_name || 'Unknown Item');
+                                let itemName = item.item_name || 'Unknown Item';
+                                // Add beverage size if available
+                                if (item.beverage_size) {
+                                    itemName += ` (${item.beverage_size})`;
+                                }
+                                itemNames.push(itemName);
                             }
                         });
                     }
