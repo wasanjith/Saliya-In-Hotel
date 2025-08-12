@@ -561,7 +561,7 @@
                     <h4 class="font-semibold text-gray-900 mb-3">Customer Information</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="relative">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name (Optional)</label>
                             <div class="relative">
                                 <input type="text" 
                                        x-model="customerInfo.name" 
@@ -569,7 +569,7 @@
                                        @focus="showCustomerSuggestions = true"
                                        @blur="setTimeout(() => showCustomerSuggestions = false, 200)"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                       placeholder="Enter customer name or search existing customers">
+                                       placeholder="Enter customer name or search existing customers (optional)">
                                 
                                 <!-- Customer Suggestions Dropdown -->
                                 <div x-show="showCustomerSuggestions && customerSuggestions.length > 0" 
@@ -606,10 +606,10 @@
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number (Optional)</label>
                             <input type="tel" x-model="customerInfo.phone" 
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                   placeholder="Enter phone number">
+                                   placeholder="Enter phone number (optional)">
                         </div>
                     </div>
                 </div>
@@ -697,8 +697,8 @@
                         Cancel
                     </button>
                     <button @click="processPaymentAndCloseOrder()" 
-                            :disabled="!customerInfo.name || paymentInfo.paidAmount <= 0"
-                            :class="(!customerInfo.name || paymentInfo.paidAmount <= 0) ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'"
+                            :disabled="paymentInfo.paidAmount <= 0"
+                            :class="paymentInfo.paidAmount <= 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'"
                             class="flex-1 text-white py-3 px-4 rounded-lg font-medium">
                         <i class="fas fa-check mr-2"></i>
                         Complete Payment
@@ -1089,8 +1089,8 @@
                 },
                 
                 async processPaymentAndCloseOrder() {
-                    if (!this.customerInfo.name || this.paymentInfo.paidAmount <= 0) {
-                        alert('Please fill in customer name and payment amount.');
+                    if (this.paymentInfo.paidAmount <= 0) {
+                        alert('Please enter payment amount.');
                         return;
                     }
                     
@@ -1110,7 +1110,7 @@
                         const requestData = {
                             order_id: this.orderToClose.id,
                             table_number: this.selectedTableInfo.number,
-                            customer_name: this.customerInfo.name,
+                            customer_name: this.customerInfo.name || 'Walk-in Customer',
                             customer_phone: this.customerInfo.phone || '',
                             payment_method: this.paymentInfo.method,
                             discount_amount: parseFloat(this.paymentInfo.discount || 0),

@@ -357,13 +357,13 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="flex justify-between items-center mt-2">
+                                {{-- <div class="flex justify-between items-center mt-2">
                                     <div class="flex space-x-2">
                                         <button @click="applyDiscount(index)" class="text-xs text-blue-600 hover:underline">Discount</button>
                                         <button @click="removeItem(index)" class="text-xs text-red-600 hover:underline">Remove</button>
                                     </div>
                                     <span class="font-medium text-gray-800" x-text="'Rs. ' + Math.round(item.price * item.quantity)"></span>
-                                </div>
+                                </div> --}}
                             </div>
                         </template>
                         
