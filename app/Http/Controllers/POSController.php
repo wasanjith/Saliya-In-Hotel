@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\FoodItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Services\InventoryService;
 
 use Illuminate\Support\Facades\Log;
 
@@ -206,6 +207,9 @@ class POSController extends Controller
             if ($request->customer_paid && $customer) {
                 $customer->incrementOrdersQty();
             }
+
+            // Deduct inventory based on recipe definitions (within the same transaction)
+            app(InventoryService::class)->deductForOrderItems($itemsArray);
 
             DB::commit();
 
